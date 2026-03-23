@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import OTPListener from "../components/OTPListener";
 import SavedCreds from "../components/SavedCreds";
+import { useAuth } from "../hooks/useAuth";
+import { useInbox } from "../hooks/useInbox";
 
 type Tab = "otp" | "creds";
 
@@ -104,18 +106,73 @@ function IconList() {
 export default function Popup() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState("");
+  const [currentSite, setCurrentSite] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("otp");
 
+  function detectSite(callback: (hostname: string) => void) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tab = tabs[0];
+      const url = tab?.url ?? "";
+
+      if (!url || url.startsWith("chrome")) {
+        callback("unknown");
+        return;
+      }
+
+      try {
+        const hostname = new URL(url).hostname;
+        callback(hostname);
+      } catch {
+        callback("unknown");
+      }
+    });
+  }
+
+  function handleLogin(id: string) {
+    setUserId(id);
+    detectSite((hostname) => {
+      setCurrentSite(hostname);
+      setIsLoggedIn(true);
+    });
+  }
+
+  const inbox = useInbox(userId, currentSite);
+
+  useEffect(() => {
+    if (isLoggedIn && currentSite) {
+      inbox.fetchSavedInboxes();
+    }
+  }, [isLoggedIn, currentSite]);
+
   if (!isLoggedIn) {
-    return <LoginScreen onLogin={(id) => { setUserId(id); setIsLoggedIn(true); }} />;
+    return <LoginScreen onLogin={handleLogin} />;
   }
 
   return (
-    <div className="flex flex-col w-full min-h-[400px]">
+    <div className="flex flex-col bg-white rounded-xl border border-black/10 m-2 overflow-hidden">
       <Header userId={userId} />
       <TabBar activeTab={activeTab} onChange={setActiveTab} />
       <div className="flex-1">
-        {activeTab === "otp" ? <OTPListener /> : <SavedCreds />}
+        {activeTab === "otp" ? (
+          <OTPListener
+            currentSite={currentSite}
+            activeInbox={inbox.activeInbox}
+            otpState={inbox.otpState}
+            otp={inbox.otp}
+            rawMessage={inbox.rawMessage}
+            loading={inbox.loading}
+            error={inbox.error}
+            onGenerate={inbox.generateNewInbox}
+            onRefresh={inbox.refresh}
+          />
+        ) : (
+          <SavedCreds
+            currentSite={currentSite}
+            savedInboxes={inbox.savedInboxes}
+            activeInbox={inbox.activeInbox}
+            onSelect={inbox.selectInbox}
+          />
+        )}
       </div>
     </div>
   );

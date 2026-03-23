@@ -28,6 +28,7 @@ function copyExtensionFiles() {
 
 export default defineConfig({
   root: "src",
+  envDir: resolve(__dirname),
   plugins: [react(), copyExtensionFiles()],
   build: {
     copyPublicDir: false,
