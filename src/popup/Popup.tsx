@@ -171,6 +171,7 @@ export default function Popup() {
             savedInboxes={inbox.savedInboxes}
             activeInbox={inbox.activeInbox}
             onSelect={inbox.selectInbox}
+            userId={userId}
           />
         )}
       </div>

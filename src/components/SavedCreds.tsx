@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { type SavedInbox } from "../hooks/useInbox";
+import { decryptPassword } from "../lib/crypto";
 
 type Props = {
     currentSite: string;
     savedInboxes: SavedInbox[];
     activeInbox: SavedInbox | null;
     onSelect: (inbox: SavedInbox) => void;
+    userId: string;
 };
 
 export default function SavedCreds({
@@ -13,6 +15,7 @@ export default function SavedCreds({
     savedInboxes,
     activeInbox,
     onSelect,
+    userId
 }: Props) {
     const [revealed, setRevealed] = useState<string[]>([]);
     const [copied, setCopied] = useState<string | null>(null);
@@ -93,7 +96,7 @@ export default function SavedCreds({
                             <span className="text-[10px] text-black/30">password</span>
                             <div className="flex gap-1.5">
                                 <div className="flex-1 h-[30px] rounded-lg border border-black/10 bg-white px-2.5 flex items-center font-mono text-[12px] tracking-widest overflow-hidden whitespace-nowrap">
-                                    {revealed.includes(cred.id) ? cred.password : "••••••••••••"}
+                                    {revealed.includes(cred.id) ? decryptPassword(cred.password, userId) : "••••••••••••"}
                                 </div>
                                 <button
                                     onClick={() => toggleReveal(cred.id)}
@@ -102,7 +105,7 @@ export default function SavedCreds({
                                     {revealed.includes(cred.id) ? "Hide" : "Show"}
                                 </button>
                                 <button
-                                    onClick={() => copy(cred.password, `pass-${cred.id}`)}
+                                    onClick={() => copy(decryptPassword(cred.password, userId), `pass-${cred.id}`)}
                                     className="h-[30px] px-2.5 rounded-lg border border-black/10 text-[11px] text-black/40 hover:bg-black/5 transition-colors"
                                 >
                                     {copied === `pass-${cred.id}` ? "Copied!" : "Copy"}
