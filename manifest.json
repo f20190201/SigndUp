@@ -1,0 +1,36 @@
+{
+    "manifest_version": 3,
+    "name": "SigndUp",
+    "version": "1.0.0",
+    "description": "Disposable inboxes and saved creds for every site.",
+    "action": {
+        "default_popup": "popup/index.html",
+        "default_icon": {
+            "16": "icons/icon16.png"
+        }
+    },
+    "background": {
+        "service_worker": "background/index.js",
+        "type": "module"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content/index.js"
+            ]
+        }
+    ],
+    "permissions": [
+        "activeTab",
+        "storage",
+        "tabs"
+    ],
+    "host_permissions": [
+        "https://api.mail.tm/*",
+        "https://mercure.mail.tm/*",
+        "https://*.supabase.co/*"
+    ]
+}
