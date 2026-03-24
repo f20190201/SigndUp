@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { type SavedInbox } from "../hooks/useInbox";
+import InputAndCopyBtnShimmer from "./library/InputAndCopyBtnShimmer";
+import { decryptPassword } from "../lib/crypto";
 
 type OTPState = "idle" | "waiting" | "received" | "no_otp";
 
@@ -13,7 +15,10 @@ type Props = {
     error: string | null;
     onGenerate: () => void;
     onRefresh: () => void;
+    userId: string;
 };
+
+const actionBtnClassName = "h-[34px] px-3 rounded-lg border border-black/20 text-[12px] text-black/60 hover:bg-black/5 transition-colors"
 
 export default function OTPListener({
     currentSite,
@@ -25,9 +30,11 @@ export default function OTPListener({
     error,
     onGenerate,
     onRefresh,
+    userId
 }: Props) {
     const [copied, setCopied] = useState<Record<string, boolean>>({});
     const [showRaw, setShowRaw] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const copy = (text: string, btnId: string) => {
         navigator.clipboard.writeText(text);
@@ -49,45 +56,49 @@ export default function OTPListener({
                     </span>
                 </div>
             )}
+            <p className="text-[11px] text-black/40">Inbox address</p>
+            {loading ? <div className="flex flex-col gap-2"><InputAndCopyBtnShimmer /> <InputAndCopyBtnShimmer /></div> : activeInbox && (
+                <>
+                    <div>
 
-            {activeInbox && (
-                <div>
-                    <p className="text-[11px] text-black/40 mb-1">Inbox address</p>
-                    <div className="flex gap-2">
-                        <div className="flex-1 h-[34px] rounded-lg border border-black/20 bg-black/5 px-2.5 flex items-center font-mono text-[12px] overflow-hidden whitespace-nowrap">
-                            {activeInbox.email_address}
+                        <div className="flex gap-2">
+                            <div className="flex-1 h-[34px] rounded-lg border border-black/20 bg-black/5 px-2.5 flex items-center font-mono text-[12px] overflow-hidden whitespace-nowrap">
+                                {activeInbox.email_address}
+                            </div>
+                            <button
+                                onClick={() => copy(activeInbox.email_address, "emailAddress")}
+                                className="h-[34px] px-3 rounded-lg border border-black/20 text-[12px] text-black/60 hover:bg-black/5 transition-colors"
+                            >
+                                {copied["emailAddress"] ? "Copied!" : "Copy"}
+                            </button>
                         </div>
-                        <button
-                            onClick={() => copy(activeInbox.email_address, "emailAddress")}
-                            className="h-[34px] px-3 rounded-lg border border-black/20 text-[12px] text-black/60 hover:bg-black/5 transition-colors"
-                        >
-                            {copied["emailAddress"] ? "Copied!" : "Copy"}
-                        </button>
                     </div>
-                </div>
+
+                    <div>
+
+                        <div className="flex gap-2">
+                            <div className="flex-1 h-[34px] rounded-lg border border-black/20 bg-black/5 px-2.5 flex items-center font-mono text-[12px] overflow-hidden whitespace-nowrap">
+                                {showPassword ? decryptPassword(activeInbox.password, userId) : "••••••••••••"}
+                            </div>
+                            <button
+                                onClick={() => setShowPassword(prev => !prev)}
+                                className={actionBtnClassName}
+                            >
+                                {showPassword ? "Hide" : "Show"}
+                            </button>
+                            <button
+                                onClick={() => copy(decryptPassword(activeInbox.password, userId), "password")}
+                                className={actionBtnClassName}
+                            >
+                                {copied["password"] ? "Copied!" : "Copy"}
+                            </button>
+                        </div>
+                    </div>
+                </>
             )}
 
             {error && (
                 <p className="text-[11px] text-red-500">{error}</p>
-            )}
-
-            {otpState === "idle" && (
-                <>
-                    {activeInbox && (
-                        <div className="flex items-center gap-2 text-[11px] text-black/30">
-                            <div className="flex-1 h-px bg-black/10" />
-                            or
-                            <div className="flex-1 h-px bg-black/10" />
-                        </div>
-                    )}
-                    <button
-                        onClick={onGenerate}
-                        disabled={loading}
-                        className="h-[34px] px-3 mx-auto rounded-lg bg-[#111] text-white text-[12px] font-medium w-fit hover:bg-[#333] transition-colors disabled:opacity-50"
-                    >
-                        {loading ? "Creating inbox..." : "+ Generate new inbox"}
-                    </button>
-                </>
             )}
 
             {otpState === "waiting" && activeInbox && (
@@ -99,7 +110,7 @@ export default function OTPListener({
                         </div>
                         <button
                             onClick={onRefresh}
-                            className="text-[11px] text-black/30 hover:text-black/60 transition-colors"
+                            className="text-[11px] text-black/30 hover:text-black/60 transition-colors cursor-pointer"
                         >
                             Force Refresh
                         </button>
@@ -109,7 +120,6 @@ export default function OTPListener({
                     </div>
                 </div>
             )}
-
             {otpState === "received" && otp && (
                 <div className="border border-black/10 rounded-lg overflow-hidden">
                     <div className="flex items-center justify-between px-3 py-2 bg-black/5 border-b border-black/10">
@@ -183,6 +193,28 @@ export default function OTPListener({
                     </div>
                 )
             }
+
+            <>
+                {activeInbox && (
+                    <div className="flex items-center gap-2 text-[11px] text-black/30">
+                        <div className="flex-1 h-px bg-black/10" />
+                        or
+                        <div className="flex-1 h-px bg-black/10" />
+                    </div>
+                )}
+                <button
+                    onClick={onGenerate}
+                    disabled={loading}
+                    className="h-[34px] px-3 mx-auto rounded-lg bg-[#111] text-white text-[12px] font-medium w-fit hover:bg-[#333] transition-colors disabled:opacity-50"
+                >
+                    {loading ? "Creating inbox..." : "+ Generate new inbox"}
+                </button>
+            </>
+
+
+
+
+
         </div >
     );
 }

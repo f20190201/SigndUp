@@ -164,6 +164,7 @@ export default function Popup() {
             error={inbox.error}
             onGenerate={inbox.generateNewInbox}
             onRefresh={inbox.refresh}
+            userId={userId}
           />
         ) : (
           <SavedCreds

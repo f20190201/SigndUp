@@ -24,6 +24,7 @@ export function useInbox(userId: string, websiteUrl: string) {
     const [stopListener, setStopListener] = useState<(() => void) | null>(null);
 
     async function fetchSavedInboxes() {
+        setLoading(true);
         const { data, error } = await getSavedInboxesFromDb(userId, websiteUrl);
 
         if (error) {
@@ -33,6 +34,7 @@ export function useInbox(userId: string, websiteUrl: string) {
 
         setSavedInboxes(data ?? []);
         if (data && data.length > 0) setActiveInbox(data[0]);
+        setLoading(false);
     }
 
     async function generateNewInbox() {
