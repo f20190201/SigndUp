@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import OTPListener from "../components/OTPListener";
 import SavedCreds from "../components/SavedCreds";
-import { useAuth } from "../hooks/useAuth";
 import { useInbox } from "../hooks/useInbox";
+import { encryptPassword, decryptPassword } from "../lib/crypto";
 
 type Tab = "otp" | "creds";
 
@@ -129,12 +129,27 @@ export default function Popup() {
   }
 
   function handleLogin(id: string) {
+    chrome.storage.local.set({ sessionStatus: { userId: encryptPassword(id, import.meta.env.VITE_USERID_SALT), expiresAt: String(Date.now() + 7 * 60 * 1000) } });
     setUserId(id);
     detectSite((hostname) => {
       setCurrentSite(hostname);
       setIsLoggedIn(true);
     });
   }
+
+  useEffect(() => {
+    chrome.storage.local.get("sessionStatus", (result: Record<string, Record<string, string>>) => {
+      if (result.sessionStatus?.userId && Number(result.sessionStatus?.expiresAt) > Date.now()) {
+        setUserId(decryptPassword(result.sessionStatus.userId, import.meta.env.VITE_USERID_SALT));
+        detectSite((hostname) => {
+          setCurrentSite(hostname);
+          setIsLoggedIn(true);
+        });
+      } else {
+        chrome.storage.local.remove("sessionStatus");
+      }
+    });
+  }, []);
 
   const inbox = useInbox(userId, currentSite);
 
@@ -160,11 +175,13 @@ export default function Popup() {
             otpState={inbox.otpState}
             otp={inbox.otp}
             rawMessage={inbox.rawMessage}
+            otpTimestamp={inbox.timestamp}
             loading={inbox.loading}
             error={inbox.error}
             onGenerate={inbox.generateNewInbox}
             onRefresh={inbox.refresh}
             userId={userId}
+            onSelect={inbox.selectInbox}
           />
         ) : (
           <SavedCreds

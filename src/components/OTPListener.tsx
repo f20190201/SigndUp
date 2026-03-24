@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { type SavedInbox } from "../hooks/useInbox";
 import InputAndCopyBtnShimmer from "./library/InputAndCopyBtnShimmer";
 import { decryptPassword } from "../lib/crypto";
@@ -16,6 +16,8 @@ type Props = {
     onGenerate: () => void;
     onRefresh: () => void;
     userId: string;
+    onSelect: (inbox: SavedInbox) => void;
+    otpTimestamp: string | null;
 };
 
 const actionBtnClassName = "h-[34px] px-3 rounded-lg border border-black/20 text-[12px] text-black/60 hover:bg-black/5 transition-colors"
@@ -30,11 +32,19 @@ export default function OTPListener({
     error,
     onGenerate,
     onRefresh,
-    userId
+    userId,
+    onSelect,
+    otpTimestamp
 }: Props) {
     const [copied, setCopied] = useState<Record<string, boolean>>({});
     const [showRaw, setShowRaw] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
+    useEffect(() => {
+        if (activeInbox && otpState === "idle") {
+            onSelect(activeInbox);
+        }
+    }, [activeInbox])
 
     const copy = (text: string, btnId: string) => {
         navigator.clipboard.writeText(text);
@@ -123,9 +133,9 @@ export default function OTPListener({
             {otpState === "received" && otp && (
                 <div className="border border-black/10 rounded-lg overflow-hidden">
                     <div className="flex items-center justify-between px-3 py-2 bg-black/5 border-b border-black/10">
-                        <span className="text-[11px] text-black/50">OTP received · {currentSite}</span>
+                        <span className="text-[11px] text-black/50">OTP received at {new Date(otpTimestamp || "--").toLocaleString()}</span>
                         <div className="flex flex-row gap-1 items-center">
-                            <svg ref={(spinIconRef) => {
+                            <svg onClick={() => onRefresh()} ref={(spinIconRef) => {
                                 spinIconRef?.addEventListener('click', function () {
                                     this.classList.add('animate-spin-once');
                                     setTimeout(() => {
@@ -136,7 +146,7 @@ export default function OTPListener({
                                 <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
                                 <polyline points="21 3 21 9 15 9"></polyline>
                             </svg>
-                            <span className="text-[10px] text-black/30">just now</span>
+
                         </div>
                     </div>
                     <div className="flex items-center justify-between px-3 py-4">

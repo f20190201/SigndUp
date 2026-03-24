@@ -47,8 +47,8 @@ async function getToken(email: string, password: string): Promise<string> {
 
 export async function listenForOTP(
     inbox: Inbox,
-    onOTP: (otp: string, raw: string) => void,
-    onNoOTP: (raw: string) => void,
+    onOTP: (otp: string, raw: string, timestamp: string) => void,
+    onNoOTP: (raw: string, timestamp: string) => void,
     onError: (err: unknown) => void
 ): Promise<() => void> {
     const token = await getToken(inbox.email, inbox.password);
@@ -83,12 +83,12 @@ export async function listenForOTP(
                     const otp = extractOTP(text);
 
                     if (otp) {
-                        onOTP(otp, text);
+                        onOTP(otp, text, msg.createdAt);
                         controller.abort();
                         return;
                     } else {
                         // email arrived but no OTP detected
-                        onNoOTP(text);
+                        onNoOTP(text, msg.createdAt);
                     }
                 }
             }

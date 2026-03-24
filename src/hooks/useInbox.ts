@@ -16,7 +16,7 @@ export type OTPState = "idle" | "waiting" | "received" | "no_otp";
 export function useInbox(userId: string, websiteUrl: string) {
     const [savedInboxes, setSavedInboxes] = useState<SavedInbox[]>([]);
     const [activeInbox, setActiveInbox] = useState<SavedInbox | null>(null);
-    const [otp, setOtp] = useState<string | null>(null);
+    const [otp, setOtp] = useState<{ otp: string, timestamp: string } | null>(null);
     const [rawMessage, setRawMessage] = useState<string | null>(null);
     const [otpState, setOtpState] = useState<OTPState>("idle");
     const [loading, setLoading] = useState(false);
@@ -83,12 +83,12 @@ export function useInbox(userId: string, websiteUrl: string) {
 
         const stop = await listenForOTP(
             inbox,
-            (receivedOtp, raw) => {
-                setOtp(receivedOtp);
+            (receivedOtp, raw, timestamp) => {
+                setOtp({ otp: receivedOtp, timestamp });
                 setRawMessage(raw);
                 setOtpState("received");
             },
-            (raw) => {
+            (raw, timestamp) => {
                 // email arrived but no OTP found
                 setRawMessage(raw);
                 setOtpState("no_otp");
@@ -117,9 +117,10 @@ export function useInbox(userId: string, websiteUrl: string) {
     return {
         savedInboxes,
         activeInbox,
-        otp,
+        otp: otp?.otp || null,
         rawMessage,
         otpState,
+        timestamp: otp?.timestamp || null,
         loading,
         error,
         fetchSavedInboxes,
