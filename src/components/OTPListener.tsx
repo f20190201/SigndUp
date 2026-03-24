@@ -26,13 +26,13 @@ export default function OTPListener({
     onGenerate,
     onRefresh,
 }: Props) {
-    const [copied, setCopied] = useState(false);
+    const [copied, setCopied] = useState<Record<string, boolean>>({});
     const [showRaw, setShowRaw] = useState(false);
 
-    const copy = (text: string) => {
+    const copy = (text: string, btnId: string) => {
         navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
+        setCopied(prev => ({ ...prev, [btnId]: true }));
+        setTimeout(() => setCopied(prev => ({ ...prev, [btnId]: false })), 1500);
     };
 
     return (
@@ -58,10 +58,10 @@ export default function OTPListener({
                             {activeInbox.email_address}
                         </div>
                         <button
-                            onClick={() => copy(activeInbox.email_address)}
+                            onClick={() => copy(activeInbox.email_address, "emailAddress")}
                             className="h-[34px] px-3 rounded-lg border border-black/20 text-[12px] text-black/60 hover:bg-black/5 transition-colors"
                         >
-                            {copied ? "Copied!" : "Copy"}
+                            {copied["emailAddress"] ? "Copied!" : "Copy"}
                         </button>
                     </div>
                 </div>
@@ -114,7 +114,20 @@ export default function OTPListener({
                 <div className="border border-black/10 rounded-lg overflow-hidden">
                     <div className="flex items-center justify-between px-3 py-2 bg-black/5 border-b border-black/10">
                         <span className="text-[11px] text-black/50">OTP received · {currentSite}</span>
-                        <span className="text-[10px] text-black/30">just now</span>
+                        <div className="flex flex-row gap-1 items-center">
+                            <svg ref={(spinIconRef) => {
+                                spinIconRef?.addEventListener('click', function () {
+                                    this.classList.add('animate-spin-once');
+                                    setTimeout(() => {
+                                        this.classList.remove('animate-spin-once');
+                                    }, 600);
+                                })
+                            }} className="h-3 w-3 cursor-pointer transition-colors hover:text-gray-600" fill="none" id="refresh-icon" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+                                <polyline points="21 3 21 9 15 9"></polyline>
+                            </svg>
+                            <span className="text-[10px] text-black/30">just now</span>
+                        </div>
                     </div>
                     <div className="flex items-center justify-between px-3 py-4">
                         <div>
@@ -122,51 +135,54 @@ export default function OTPListener({
                             <div className="text-[10px] text-black/30 mt-1">tap to copy</div>
                         </div>
                         <button
-                            onClick={() => copy(otp)}
+                            onClick={() => copy(otp, "otp")}
                             className="h-[34px] px-3 rounded-lg bg-[#111] text-white text-[12px] hover:bg-[#333] transition-colors"
                         >
-                            {copied ? "Copied!" : "Copy OTP"}
+                            {copied["otp"] ? "Copied!" : "Copy OTP"}
                         </button>
                     </div>
                 </div>
-            )}
+            )
+            }
 
-            {otpState === "no_otp" && (
-                <div className="border border-black/10 rounded-lg overflow-hidden">
-                    <div className="flex items-center justify-between px-3 py-2 bg-black/5 border-b border-black/10">
-                        <div className="flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                            <span className="text-[11px] text-black/50">Email received — no OTP found</span>
+            {
+                otpState === "no_otp" && (
+                    <div className="border border-black/10 rounded-lg overflow-hidden">
+                        <div className="flex items-center justify-between px-3 py-2 bg-black/5 border-b border-black/10">
+                            <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                <span className="text-[11px] text-black/50">Email received — no OTP found</span>
+                            </div>
+                            <button
+                                onClick={onRefresh}
+                                className="text-[11px] text-black/30 hover:text-black/60 transition-colors"
+                            >
+                                Retry
+                            </button>
                         </div>
-                        <button
-                            onClick={onRefresh}
-                            className="text-[11px] text-black/30 hover:text-black/60 transition-colors"
-                        >
-                            Retry
-                        </button>
+                        <div className="px-3 py-3 flex flex-col gap-2">
+                            <p className="text-[12px] text-black/40 leading-relaxed">
+                                We couldn't detect an OTP in the latest email.
+                            </p>
+                            {rawMessage && (
+                                <>
+                                    <button
+                                        onClick={() => setShowRaw((p) => !p)}
+                                        className="text-[11px] text-black/40 hover:text-black/70 underline underline-offset-2 text-left transition-colors"
+                                    >
+                                        {showRaw ? "Hide original message" : "View original message"}
+                                    </button>
+                                    {showRaw && (
+                                        <div className="bg-black/5 rounded-lg p-2.5 text-[11px] font-mono text-black/50 leading-relaxed max-h-[120px] overflow-y-auto whitespace-pre-wrap break-words">
+                                            {rawMessage}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
-                    <div className="px-3 py-3 flex flex-col gap-2">
-                        <p className="text-[12px] text-black/40 leading-relaxed">
-                            We couldn't detect an OTP in the latest email.
-                        </p>
-                        {rawMessage && (
-                            <>
-                                <button
-                                    onClick={() => setShowRaw((p) => !p)}
-                                    className="text-[11px] text-black/40 hover:text-black/70 underline underline-offset-2 text-left transition-colors"
-                                >
-                                    {showRaw ? "Hide original message" : "View original message"}
-                                </button>
-                                {showRaw && (
-                                    <div className="bg-black/5 rounded-lg p-2.5 text-[11px] font-mono text-black/50 leading-relaxed max-h-[120px] overflow-y-auto whitespace-pre-wrap break-words">
-                                        {rawMessage}
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

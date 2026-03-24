@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "../lib/supabase";
+import { getUserFromDb } from "../utils/supabase-utils";
 
 type AuthState = "idle" | "loading" | "error" | "success";
 
@@ -12,11 +12,7 @@ export function useAuth() {
         setError(null);
 
         try {
-            const { data, error } = await supabase
-                .from("user_site_inboxes")
-                .select("user_id")
-                .eq("user_id", userId)
-                .limit(1);
+            const { data: _data, error } = await getUserFromDb(userId);
 
             if (error) throw error;
 

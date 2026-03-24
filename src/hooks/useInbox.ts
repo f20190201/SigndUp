@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { addNewInboxToDb, getSavedInboxesFromDb } from "../utils/supabase-utils";
 import { createInbox, listenForOTP, type Inbox } from "../lib/mail";
 import { decryptPassword, encryptPassword } from "../lib/crypto";
 
@@ -23,12 +24,7 @@ export function useInbox(userId: string, websiteUrl: string) {
     const [stopListener, setStopListener] = useState<(() => void) | null>(null);
 
     async function fetchSavedInboxes() {
-        const { data, error } = await supabase
-            .from("user_site_inboxes")
-            .select("*")
-            .eq("user_id", userId)
-            .eq("website_url", websiteUrl)
-            .order("created_at", { ascending: false });
+        const { data, error } = await getSavedInboxesFromDb(userId, websiteUrl);
 
         if (error) {
             setError("Failed to load saved inboxes.");
@@ -47,24 +43,13 @@ export function useInbox(userId: string, websiteUrl: string) {
             const inbox = await createInbox();
             const encrypted = encryptPassword(inbox.password, userId);
 
-            const { data, error } = await supabase
-                .from("user_site_inboxes")
-                .insert({
-                    user_id: userId,
-                    website_url: websiteUrl,
-                    email_address: inbox.email,
-                    password: encrypted,
-                })
-                .select()
-                .single();
+            const { data, error } = await addNewInboxToDb(userId, websiteUrl, inbox.email, encrypted)
 
             if (error) throw error;
 
             setSavedInboxes((prev) => [data, ...prev]);
             setActiveInbox(data);
-            // saveActiveInboxToStorage(data);
 
-            // use original plain password, not the encrypted one from data
             await startListening({
                 id: data.id,
                 email: inbox.email,
