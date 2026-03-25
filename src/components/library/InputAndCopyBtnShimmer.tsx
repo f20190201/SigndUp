@@ -1,4 +1,6 @@
-export default function InputAndCopyBtnShimmer() {
+import { memo } from "react";
+
+function InputAndCopyBtnShimmer() {
     return (
         <div className="flex gap-2 animate-pulse">
             <div className="relative flex-1 h-[34px] rounded-lg border border-black/20 bg-black/5 overflow-hidden">
@@ -11,3 +13,5 @@ export default function InputAndCopyBtnShimmer() {
         </div>
     );
 }
+
+export default memo(InputAndCopyBtnShimmer);

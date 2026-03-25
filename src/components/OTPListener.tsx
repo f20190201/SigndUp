@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { type SavedInbox } from "../hooks/useInbox";
 import InputAndCopyBtnShimmer from "./library/InputAndCopyBtnShimmer";
 import { decryptPassword } from "../lib/crypto";
+import ViewOriginalMessage from "./library/ViewOriginalMessage";
 
 type OTPState = "idle" | "waiting" | "received" | "no_otp";
 
@@ -161,6 +162,7 @@ export default function OTPListener({
                             {copied["otp"] ? "Copied!" : "Copy OTP"}
                         </button>
                     </div>
+                    <ViewOriginalMessage rawMessage={rawMessage} showRaw={showRaw} setShowRaw={setShowRaw} />
                 </div>
             )
             }
@@ -184,21 +186,7 @@ export default function OTPListener({
                             <p className="text-[12px] text-black/40 leading-relaxed">
                                 We couldn't detect an OTP in the latest email.
                             </p>
-                            {rawMessage && (
-                                <>
-                                    <button
-                                        onClick={() => setShowRaw((p) => !p)}
-                                        className="text-[11px] text-black/40 hover:text-black/70 underline underline-offset-2 text-left transition-colors"
-                                    >
-                                        {showRaw ? "Hide original message" : "View original message"}
-                                    </button>
-                                    {showRaw && (
-                                        <div className="bg-black/5 rounded-lg p-2.5 text-[11px] font-mono text-black/50 leading-relaxed max-h-[120px] overflow-y-auto whitespace-pre-wrap break-words">
-                                            {rawMessage}
-                                        </div>
-                                    )}
-                                </>
-                            )}
+                            <ViewOriginalMessage rawMessage={rawMessage} showRaw={showRaw} setShowRaw={setShowRaw} />
                         </div>
                     </div>
                 )
