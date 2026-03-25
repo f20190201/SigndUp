@@ -79,7 +79,7 @@ export async function listenForOTP(
                         signal,
                     });
                     const msg = await msgRes.json();
-                    const text = msg.text ?? msg.intro ?? msg.subject ?? "";
+                    const text = msg.text || "" + msg.intro || "" + msg.subject || "";
                     const otp = extractOTP(text);
 
                     if (otp) {
