@@ -7,6 +7,10 @@ body {
   min-width: 320px;
 }
 
+button:not(:disabled) {
+  cursor: pointer;
+}
+
 @keyframes spin-once {
   from {
     transform: rotate(0deg);
