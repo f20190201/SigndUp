@@ -173,6 +173,7 @@ export default function Popup() {
             activeInbox={inbox.activeInbox}
             onSelect={inbox.selectInbox}
             userId={userId}
+            onDelete={inbox.deleteInbox}
           />
         )}
       </div>

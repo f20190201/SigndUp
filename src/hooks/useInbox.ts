@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { supabase } from "../lib/supabase";
-import { addNewInboxToDb, getSavedInboxesFromDb } from "../utils/supabase-utils";
+import { addNewInboxToDb, deleteInboxFromDb, getSavedInboxesFromDb } from "../utils/supabase-utils";
 import { createInbox, listenForOTP, type Inbox } from "../lib/mail";
 import { decryptPassword, encryptPassword } from "../lib/crypto";
 
@@ -9,6 +8,7 @@ export type SavedInbox = {
     email_address: string;
     password: string;
     created_at: string;
+    inbox_id: string;
 };
 
 export type OTPState = "idle" | "waiting" | "received" | "no_otp";
@@ -45,7 +45,7 @@ export function useInbox(userId: string, websiteUrl: string) {
             const inbox = await createInbox();
             const encrypted = encryptPassword(inbox.password, userId);
 
-            const { data, error } = await addNewInboxToDb(userId, websiteUrl, inbox.email, encrypted)
+            const { data, error } = await addNewInboxToDb(userId, websiteUrl, inbox.id, inbox.email, encrypted)
 
             if (error) throw error;
 
@@ -55,7 +55,7 @@ export function useInbox(userId: string, websiteUrl: string) {
             await startListening({
                 id: data.id,
                 email: inbox.email,
-                password: inbox.password,
+                password: inbox.password
             });
         } catch (err) {
             setError("Failed to generate inbox. Try again.");
@@ -102,6 +102,15 @@ export function useInbox(userId: string, websiteUrl: string) {
         setStopListener(() => stop);
     }
 
+    async function deleteInbox(inboxId: string) {
+        const { error } = await deleteInboxFromDb(inboxId);
+        if (error) {
+            setError("Failed to delete inbox. Try again.");
+            return;
+        }
+        fetchSavedInboxes();
+    }
+
     function refresh() {
         if (activeInbox) {
             console.log("avsdv", activeInbox)
@@ -127,5 +136,6 @@ export function useInbox(userId: string, websiteUrl: string) {
         generateNewInbox,
         selectInbox,
         refresh,
+        deleteInbox
     };
 }

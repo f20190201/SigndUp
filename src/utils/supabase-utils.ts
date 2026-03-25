@@ -17,7 +17,7 @@ export async function getSavedInboxesFromDb(userId: string, websiteUrl: string) 
         .order("created_at", { ascending: false })
 }
 
-export async function addNewInboxToDb(userId: string, websiteUrl: string, email: string, encrypted: string) {
+export async function addNewInboxToDb(userId: string, websiteUrl: string, inboxId: string, email: string, encrypted: string) {
     return supabase
         .from("user_site_inboxes")
         .insert({
@@ -25,7 +25,15 @@ export async function addNewInboxToDb(userId: string, websiteUrl: string, email:
             website_url: websiteUrl,
             email_address: email,
             password: encrypted,
+            inbox_id: inboxId,
         })
         .select()
         .single();
+}
+
+export async function deleteInboxFromDb(inboxId: string) {
+    return supabase
+        .from("user_site_inboxes")
+        .delete()
+        .eq("inbox_id", inboxId);
 }

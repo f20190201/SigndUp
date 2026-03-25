@@ -8,14 +8,35 @@ type Props = {
     activeInbox: SavedInbox | null;
     onSelect: (inbox: SavedInbox) => void;
     userId: string;
+    onDelete: (id: string) => void;
 };
+
+const ActiveTag = memo(() => {
+    return (
+        <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">
+            active
+        </span>
+    )
+})
+
+const UseBtn = memo(({ onClick }: { onClick: () => void }) => {
+    return (
+        <button
+            onClick={onClick}
+            className="text-[11px] px-2 py-0.5 rounded-lg border border-black/10 text-black/40 hover:bg-black/5 transition-colors"
+        >
+            Use
+        </button>
+    )
+})
 
 function SavedCreds({
     currentSite,
     savedInboxes,
     activeInbox,
     onSelect,
-    userId
+    userId,
+    onDelete
 }: Props) {
     const [revealed, setRevealed] = useState<string[]>([]);
     const [copied, setCopied] = useState<string | null>(null);
@@ -60,18 +81,18 @@ function SavedCreds({
                             #{i + 1} · {new Date(cred.created_at).toLocaleDateString()}
                         </span>
                         <div className="flex items-center gap-2">
+                            <button
+                                disabled={activeInbox?.id === cred.id}
+                                onClick={() => onDelete(cred.inbox_id)}
+                                className="text-[11px] px-2 py-0.5 rounded-lg border border-red-500 text-red-500 hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Delete
+                            </button>
                             {activeInbox?.id === cred.id && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">
-                                    active
-                                </span>
+                                <ActiveTag />
                             )}
                             {activeInbox?.id !== cred.id && (
-                                <button
-                                    onClick={() => onSelect(cred)}
-                                    className="text-[11px] px-2 py-0.5 rounded-lg border border-black/10 text-black/40 hover:bg-black/5 transition-colors"
-                                >
-                                    Use
-                                </button>
+                                <UseBtn onClick={() => onSelect(cred)} />
                             )}
                         </div>
                     </div>
