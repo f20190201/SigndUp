@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { type SavedInbox } from "../hooks/useInbox";
 import { decryptPassword } from "../lib/crypto";
 
@@ -10,7 +10,7 @@ type Props = {
     userId: string;
 };
 
-export default function SavedCreds({
+function SavedCreds({
     currentSite,
     savedInboxes,
     activeInbox,
@@ -118,3 +118,5 @@ export default function SavedCreds({
         </div>
     );
 }
+
+export default memo(SavedCreds);

@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import Header from "../components/Header";
 import OTPListener from "../components/OTPListener";
 import SavedCreds from "../components/SavedCreds";
 import { useInbox } from "../hooks/useInbox";
 import { encryptPassword, decryptPassword } from "../lib/crypto";
+import { detectSite } from "../utils/generic-utils";
 
 type Tab = "otp" | "creds";
 
-function LoginScreen({ onLogin }: { onLogin: (id: string) => void }) {
+const LoginScreen = memo(function ({ onLogin }: { onLogin: (id: string) => void }) {
   const [value, setValue] = useState("");
 
   return (
@@ -52,9 +53,9 @@ function LoginScreen({ onLogin }: { onLogin: (id: string) => void }) {
       </div>
     </div>
   );
-}
+})
 
-function TabBar({ activeTab, onChange }: { activeTab: Tab; onChange: (t: Tab) => void }) {
+const TabBar = memo(function ({ activeTab, onChange }: { activeTab: Tab; onChange: (t: Tab) => void }) {
   return (
     <div className="flex border-b border-black/10">
       {(["otp", "creds"] as Tab[]).map((tab) => (
@@ -72,9 +73,10 @@ function TabBar({ activeTab, onChange }: { activeTab: Tab; onChange: (t: Tab) =>
       ))}
     </div>
   );
-}
+})
 
-function Logo() {
+
+const Logo = memo(() => {
   return (
     <div className="w-[26px] h-[26px] rounded-[7px] bg-[#111] flex items-center justify-center flex-shrink-0">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -83,50 +85,31 @@ function Logo() {
       </svg>
     </div>
   );
-}
+})
 
-function IconMail() {
+const IconMail = memo(() => {
   return (
     <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.2">
       <rect x="1" y="2.5" width="11" height="8" rx="1.5" />
       <path d="M1 4.5l5.5 3.5 5.5-3.5" />
     </svg>
   );
-}
+})
 
-function IconList() {
+const IconList = memo(() => {
   return (
     <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.2">
       <rect x="1.5" y="1.5" width="10" height="10" rx="1.5" />
       <path d="M4 5h5M4 7.5h3" />
     </svg>
   );
-}
+})
 
 export default function Popup() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState("");
   const [currentSite, setCurrentSite] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("otp");
-
-  function detectSite(callback: (hostname: string) => void) {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tab = tabs[0];
-      const url = tab?.url ?? "";
-
-      if (!url || url.startsWith("chrome")) {
-        callback("unknown");
-        return;
-      }
-
-      try {
-        const hostname = new URL(url).hostname;
-        callback(hostname);
-      } catch {
-        callback("unknown");
-      }
-    });
-  }
 
   function handleLogin(id: string) {
     chrome.storage.local.set({ sessionStatus: { userId: encryptPassword(id, import.meta.env.VITE_USERID_SALT), expiresAt: String(Date.now() + 7 * 60 * 1000) } });

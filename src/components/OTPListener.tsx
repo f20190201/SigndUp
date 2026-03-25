@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { type SavedInbox } from "../hooks/useInbox";
 import InputAndCopyBtnShimmer from "./library/InputAndCopyBtnShimmer";
 import { decryptPassword } from "../lib/crypto";
@@ -23,7 +23,7 @@ type Props = {
 
 const actionBtnClassName = "h-[34px] px-3 rounded-lg border border-black/20 text-[12px] text-black/60 hover:bg-black/5 transition-colors"
 
-export default function OTPListener({
+function OTPListener({
     currentSite,
     activeInbox,
     otpState,
@@ -216,3 +216,5 @@ export default function OTPListener({
         </div >
     );
 }
+
+export default memo(OTPListener);
