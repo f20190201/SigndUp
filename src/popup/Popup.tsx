@@ -1,10 +1,10 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
 import Header from "../components/Header";
 import OTPListener from "../components/OTPListener";
 import SavedCreds from "../components/SavedCreds";
 import { useInbox } from "../hooks/useInbox";
 import { encryptPassword, decryptPassword } from "../lib/crypto";
-import { detectSite } from "../utils/generic-utils";
+import { detectSite, validateLocalStorageInfo } from "../utils/generic-utils";
 
 type Tab = "otp" | "creds";
 
@@ -62,7 +62,7 @@ const TabBar = memo(function ({ activeTab, onChange }: { activeTab: Tab; onChang
         <button
           key={tab}
           onClick={() => onChange(tab)}
-          className={`flex-1 h-10 flex items-center justify-center gap-1.5 text-[12px] border-b-[1.5px] transition-colors ${activeTab === tab
+          className={`flex-1 h-10 flex items-center cursor-pointer justify-center gap-1.5 text-[12px] border-b-[1.5px] transition-colors ${activeTab === tab
             ? "text-[#111] border-[#111] font-medium"
             : "text-black/40 border-transparent"
             }`}
@@ -121,20 +121,26 @@ export default function Popup() {
   }
 
   useEffect(() => {
-    chrome.storage.local.get("sessionStatus", (result: Record<string, Record<string, string>>) => {
-      if (result.sessionStatus?.userId && Number(result.sessionStatus?.expiresAt) > Date.now()) {
-        setUserId(decryptPassword(result.sessionStatus.userId, import.meta.env.VITE_USERID_SALT));
+    validateLocalStorageInfo(
+      (sessionStatus) => {
+        setUserId(decryptPassword(sessionStatus.userId, import.meta.env.VITE_USERID_SALT));
         detectSite((hostname) => {
           setCurrentSite(hostname);
           setIsLoggedIn(true);
         });
-      } else {
+      },
+      () => {
         chrome.storage.local.remove("sessionStatus");
       }
-    });
+    )
   }, []);
 
   const inbox = useInbox(userId, currentSite);
+
+  const onLogout = useCallback(() => {
+    setIsLoggedIn(false);
+    chrome.storage.local.remove("sessionStatus");
+  }, [setIsLoggedIn]);
 
   useEffect(() => {
     if (isLoggedIn && currentSite) {
@@ -148,7 +154,7 @@ export default function Popup() {
 
   return (
     <div className="flex flex-col bg-white rounded-xl border border-black/10 m-2 overflow-hidden">
-      <Header userId={userId} />
+      <Header userId={userId} onLogout={onLogout} />
       <TabBar activeTab={activeTab} onChange={setActiveTab} />
       <div className="flex-1">
         {activeTab === "otp" ? (

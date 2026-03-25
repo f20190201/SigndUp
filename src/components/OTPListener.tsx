@@ -3,6 +3,7 @@ import { type SavedInbox } from "../hooks/useInbox";
 import InputAndCopyBtnShimmer from "./library/InputAndCopyBtnShimmer";
 import { decryptPassword } from "../lib/crypto";
 import ViewOriginalMessage from "./library/ViewOriginalMessage";
+import RenderIf from "./library/RenderIf";
 
 type OTPState = "idle" | "waiting" | "received" | "no_otp";
 
@@ -108,9 +109,9 @@ function OTPListener({
                 </>
             )}
 
-            {error && (
+            <RenderIf condition={!!error}>
                 <p className="text-[11px] text-red-500">{error}</p>
-            )}
+            </RenderIf>
 
             {otpState === "waiting" && activeInbox && (
                 <div className="border border-black/10 rounded-lg overflow-hidden">
@@ -166,40 +167,37 @@ function OTPListener({
                 </div>
             )
             }
-
-            {
-                otpState === "no_otp" && (
-                    <div className="border border-black/10 rounded-lg overflow-hidden">
-                        <div className="flex items-center justify-between px-3 py-2 bg-black/5 border-b border-black/10">
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                <span className="text-[11px] text-black/50">Email received — no OTP found</span>
-                            </div>
-                            <button
-                                onClick={onRefresh}
-                                className="text-[11px] text-black/30 hover:text-black/60 transition-colors"
-                            >
-                                Retry
-                            </button>
+            <RenderIf condition={otpState === "no_otp"}>
+                <div className="border border-black/10 rounded-lg overflow-hidden">
+                    <div className="flex items-center justify-between px-3 py-2 bg-black/5 border-b border-black/10">
+                        <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            <span className="text-[11px] text-black/50">Email received — no OTP found</span>
                         </div>
-                        <div className="px-3 py-3 flex flex-col gap-2">
-                            <p className="text-[12px] text-black/40 leading-relaxed">
-                                We couldn't detect an OTP in the latest email.
-                            </p>
-                            <ViewOriginalMessage rawMessage={rawMessage} showRaw={showRaw} setShowRaw={setShowRaw} />
-                        </div>
+                        <button
+                            onClick={onRefresh}
+                            className="text-[11px] text-black/30 hover:text-black/60 transition-colors"
+                        >
+                            Retry
+                        </button>
                     </div>
-                )
-            }
+                    <div className="px-3 py-3 flex flex-col gap-2">
+                        <p className="text-[12px] text-black/40 leading-relaxed">
+                            We couldn't detect an OTP in the latest email.
+                        </p>
+                        <ViewOriginalMessage rawMessage={rawMessage} showRaw={showRaw} setShowRaw={setShowRaw} />
+                    </div>
+                </div>
+            </RenderIf>
 
             <>
-                {activeInbox && (
+                <RenderIf condition={!!activeInbox}>
                     <div className="flex items-center gap-2 text-[11px] text-black/30">
                         <div className="flex-1 h-px bg-black/10" />
                         or
                         <div className="flex-1 h-px bg-black/10" />
                     </div>
-                )}
+                </RenderIf>
                 <button
                     onClick={onGenerate}
                     disabled={loading}
@@ -208,11 +206,6 @@ function OTPListener({
                     {loading ? "Creating inbox..." : "+ Generate new inbox"}
                 </button>
             </>
-
-
-
-
-
         </div >
     );
 }

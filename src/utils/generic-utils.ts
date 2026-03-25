@@ -18,3 +18,13 @@ export function detectSite(callback: (hostname: string) => void) {
         }
     });
 }
+
+export function validateLocalStorageInfo(validSessionCallback: (sessionStatus: Record<string, string>) => void, invalidSessionCallback: () => void) {
+    chrome.storage.local.get("sessionStatus", (result: Record<string, Record<string, string>>) => {
+        if (result.sessionStatus?.userId && Number(result.sessionStatus?.expiresAt) > Date.now()) {
+            validSessionCallback(result.sessionStatus);
+        } else {
+            invalidSessionCallback();
+        }
+    })
+}

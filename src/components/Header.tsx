@@ -1,4 +1,6 @@
-export default function Header({ userId }: { userId: string }) {
+import Logout from "./library/Logout";
+
+export default function Header({ userId, onLogout }: { userId: string, onLogout: () => void }) {
     return (
         <div className="flex items-center justify-between px-4 py-3 border-b border-black/10">
             <div className="flex items-center gap-2">
@@ -12,9 +14,12 @@ export default function Header({ userId }: { userId: string }) {
                     Signd<span className="text-black/30 font-normal">Up</span>
                 </span>
             </div>
-            <span className="text-[11px] font-mono text-black/50 bg-black/5 border border-black/10 rounded-full px-2.5 py-0.5">
-                {userId}
-            </span>
+            <div className="flex flex-row gap-2 items-center">
+                <span className="text-[11px] font-mono text-black/50 bg-black/5 border border-black/10 rounded-full px-2.5 py-0.5">
+                    {userId}
+                </span>
+                <Logout onLogout={onLogout} />
+            </div>
         </div>
     );
 }
