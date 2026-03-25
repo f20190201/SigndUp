@@ -121,7 +121,7 @@ function OTPListener({
                         </div>
                         <button
                             onClick={onRefresh}
-                            className="text-[11px] text-black/30 hover:text-black/60 transition-colors cursor-pointer"
+                            className="text-[11px] text-black/30 hover:text-black/60 transition-colors cursor-pointer active:scale-95 active:text-black/60"
                         >
                             Force Refresh
                         </button>
