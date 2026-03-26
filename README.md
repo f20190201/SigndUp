@@ -1,73 +1,95 @@
-# React + TypeScript + Vite
+# SigndUp
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Disposable inboxes for those pesky one-time signups. Keep your main inbox clean and your credentials organized.**
 
-Currently, two official plugins are available:
+![SigndUp Banner](https://raw.githubusercontent.com/your-repo/path-to-banner.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Demo
 
-## React Compiler
+> [!NOTE]
+> *User-provided video placeholder goes here. The video demonstrates the seamless flow of generating an inbox, receiving an OTP, and saving credentials.*
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+<!-- Replace with your video file -->
+<!-- <video src="path/to/your/video.mp4" controls width="100%"></video> -->
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Why SigndUp?
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 1. Purpose: Kill the Spam
+We've all been there—a site forces you to sign up just to see one thing. SigndUp gives you **instant disposable inboxes** so you never have to give away your real email again. No more marketing spam, no more data breaches in your main account.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### 2. USP: Credentials Without the Headache
+Unlike other temporary mail services where you lose access once the tab is closed, SigndUp **saves your credentials**. Your temporary email and generated password are tied to your unique User ID, allowing you to "log back in" to those one-time accounts whenever you need.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### 3. Convenience: Stay in the Flow
+SigndUp is **site-aware**. You don't need to leave the page or switch tabs to manage your disposable accounts. The extension automatically detects the website you're on and surfaces the relevant saved credentials or lets you generate a new one instantly.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Features
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **Instant Inbox Generation**: Powered by [Mail.tm](https://mail.tm/), get a working email address in seconds.
+- **OTP Auto-Detection**: Our built-in OTP listener automatically extracts codes from incoming emails—no need to scroll through raw text.
+- **Encrypted Storage**: Your credentials (email + password) are encrypted locally and stored securely in [Supabase](https://supabase.com/).
+- **User ID Session**: Use a simple User ID to sync your data across sessions. No complex password resets or email verifications needed.
+- **Premium UI/UX**: A minimalist, clean interface built with React and Tailwind CSS.
+
+---
+
+## Tech Stack
+
+- **Frontend**: [React](https://reactjs.org/) + [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Backend/Database**: [Supabase](https://supabase.com/)
+- **Email API**: [Mail.tm](https://mail.tm/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+
+---
+
+## Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/SigndUp.git
+   cd SigndUp
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Set up Environment Variables:**
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_USERID_SALT=your_random_salt_for_encryption
+   ```
+
+4. **Build the extension:**
+   ```bash
+   npm run build
+   ```
+
+5. **Load in Chrome:**
+   - Open Chrome and go to `chrome://extensions/`
+   - Enable **Developer mode** (top right).
+   - Click **Load unpacked** and select the `dist` folder.
+
+---
+
+## Security & Privacy
+
+We value your privacy. Your passwords are encrypted before they ever leave your browser, using your User ID as part of the derivation key. Only you can access your saved credentials.
+
+---
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+---
+
+*Built with ❤️ for a cleaner web.*
