@@ -91,10 +91,12 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
-*Built with ❤️ for a cleaner web.*
+
 
 *Buy me a chai?*
 ---
 <p align="center">
 <img width="150" height="256" alt="image" src="https://github.com/user-attachments/assets/372bbb30-1b83-4202-9119-4882ee1a5c1b" />
 </p>
+
+*Built with ❤️ for a cleaner web.*
