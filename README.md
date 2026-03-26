@@ -1,16 +1,15 @@
 # SigndUp
 
 **Disposable inboxes for those pesky one-time signups. Keep your main inbox clean and your credentials organized.**
-
-![SigndUp Banner](https://raw.githubusercontent.com/your-repo/path-to-banner.png)
+<p align="center">
+<img width="256" height="256" alt="icon16" src="https://github.com/user-attachments/assets/7d3b6ab1-c994-4d6c-9dcd-a235c38ef66d" />
+</p>
 
 ## Demo
 
-> [!NOTE]
-> *User-provided video placeholder goes here. The video demonstrates the seamless flow of generating an inbox, receiving an OTP, and saving credentials.*
 
-<!-- Replace with your video file -->
-<!-- <video src="path/to/your/video.mp4" controls width="100%"></video> -->
+![ScreenRecording2026-03-26at3 28 14PM-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/24c8c099-e629-40ec-a68e-bc992b2f4842)
+
 
 ---
 
@@ -93,3 +92,9 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ---
 
 *Built with ❤️ for a cleaner web.*
+
+*Buy me a chai?*
+---
+<p align="center">
+<img width="150" height="256" alt="image" src="https://github.com/user-attachments/assets/372bbb30-1b83-4202-9119-4882ee1a5c1b" />
+</p>
