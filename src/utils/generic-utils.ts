@@ -1,4 +1,10 @@
 import { getDomain } from "tldts";
+import { loginUser, addNewUserToDb } from "./supabase-utils";
+
+export type AuthState =
+    | { status: "loggedOut" }
+    | { status: "loggedIn", dBUserId: string | undefined }
+    | { status: "error"; message: string };
 
 export function detectSite(callback: (hostname: string) => void) {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -27,4 +33,20 @@ export function validateLocalStorageInfo(validSessionCallback: (sessionStatus: R
             invalidSessionCallback();
         }
     })
+}
+
+export async function handleSignUpSignIn(userId: string, password: string): Promise<AuthState> {
+
+    const { data: { user, session }, error } = await addNewUserToDb(userId, password);
+    if (user === null && session === null && error?.code === "user_already_exists") {
+
+        const { data: { user, session }, error: _error } = await loginUser(userId, password);
+        if (user !== null && session !== null) {
+            return { status: "loggedIn", dBUserId: user.id };
+        } else {
+            return { status: "error", message: "Invalid password" };
+        }
+    } else {
+        return { status: "loggedIn", dBUserId: user?.id };
+    }
 }

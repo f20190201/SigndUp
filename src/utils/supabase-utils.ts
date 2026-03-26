@@ -1,10 +1,24 @@
 import { supabase } from "../lib/supabase";
 
+export async function addNewUserToDb(userId: string, password: string) {
+    return await supabase.auth.signUp({
+        email: `${userId.toLowerCase().trim()}@disposable-ext.local`,
+        password: password,
+    });
+}
+
+export async function loginUser(userId: string, password: string) {
+    return await supabase.auth.signInWithPassword({
+        email: `${userId.toLowerCase().trim()}@disposable-ext.local`,
+        password: password,
+    });
+}
+
 export async function getUserFromDb(userId: string) {
     return await supabase
         .from("user_site_inboxes")
         .select("user_id")
-        .eq("user_id", userId)
+        // .eq("user_id", userId)
         .limit(1);
 }
 

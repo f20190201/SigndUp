@@ -1,6 +1,6 @@
 import Logout from "./library/Logout";
 
-export default function Header({ userId, onLogout }: { userId: string, onLogout: () => void }) {
+export default function Header({ userId, onLogout }: { userId: string | undefined, onLogout: () => void }) {
     return (
         <div className="flex items-center justify-between px-4 py-3 border-b border-black/10">
             <div className="flex items-center gap-2">

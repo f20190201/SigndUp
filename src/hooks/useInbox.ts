@@ -113,7 +113,6 @@ export function useInbox(userId: string, websiteUrl: string) {
 
     function refresh() {
         if (activeInbox) {
-            console.log("avsdv", activeInbox)
             stopListener?.();
             startListening({
                 id: activeInbox.id,

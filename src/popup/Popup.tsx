@@ -1,15 +1,23 @@
-import { useState, useEffect, memo, useCallback } from "react";
+import { useState, useEffect, memo, useCallback, useRef } from "react";
 import Header from "../components/Header";
 import OTPListener from "../components/OTPListener";
 import SavedCreds from "../components/SavedCreds";
 import { useInbox } from "../hooks/useInbox";
 import { encryptPassword, decryptPassword } from "../lib/crypto";
-import { detectSite, validateLocalStorageInfo } from "../utils/generic-utils";
+import { detectSite, validateLocalStorageInfo, handleSignUpSignIn, type AuthState } from "../utils/generic-utils";
+import PasswordInput from "../components/library/PasswordInput";
+import UserIdInput from "../components/library/UserIdInput";
 
 type Tab = "otp" | "creds";
 
-const LoginScreen = memo(function ({ onLogin }: { onLogin: (id: string) => void }) {
-  const [value, setValue] = useState("");
+type SessionStatus = {
+  dBUserId: string;
+  userId: string;
+  expiresAt: string;
+}
+
+const LoginScreen = memo(function ({ onLogin, authState }: { onLogin: (id: string, password: string) => void, authState: AuthState | null }) {
+  const [credsObj, setCredsObj] = useState({ userId: "", password: "" });
 
   return (
     <div className="flex flex-col bg-white rounded-xl border border-black/10 m-2 overflow-hidden">
@@ -30,18 +38,19 @@ const LoginScreen = memo(function ({ onLogin }: { onLogin: (id: string) => void 
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-[11px] text-black/50">User ID</label>
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder="usr_k9x2mq74"
-            className="h-8 rounded-lg border border-black/20 bg-black/5 px-3 text-[12px] font-mono tracking-wide outline-none focus:border-black/40 w-full"
+          <UserIdInput
+            value={credsObj.userId}
+            onChange={(value) => setCredsObj({ ...credsObj, userId: value })}
+          />
+          <PasswordInput
+            value={credsObj.password}
+            onChange={(value) => setCredsObj({ ...credsObj, password: value })}
+            error={authState?.status === "error" ? authState.message : ""}
           />
         </div>
 
         <button
-          onClick={() => value.trim() && onLogin(value.trim())}
+          onClick={() => credsObj.userId.trim() && credsObj.password.trim() && onLogin(credsObj.userId.trim(), credsObj.password.trim())}
           className="h-8 rounded-lg bg-[#111] text-white text-[12px] font-medium hover:bg-[#333] transition-colors w-full"
         >
           Continue
@@ -106,27 +115,35 @@ const IconList = memo(() => {
 })
 
 export default function Popup() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authState, setAuthState] = useState<AuthState | null>(null);
   const [userId, setUserId] = useState("");
   const [currentSite, setCurrentSite] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("otp");
+  const sesstionStatusRef = useRef<SessionStatus | null>(null);
 
-  function handleLogin(id: string) {
-    chrome.storage.local.set({ sessionStatus: { userId: encryptPassword(id, import.meta.env.VITE_USERID_SALT), expiresAt: String(Date.now() + 7 * 60 * 1000) } });
-    setUserId(id);
+  async function handleLogin(id: string, password: string) {
+    let authResult = await handleSignUpSignIn(id, password)
+    if (authResult.status === "error" || authResult.status === "loggedOut") {
+      setAuthState(authResult);
+      return;
+    }
+    sesstionStatusRef.current = { dBUserId: authResult.dBUserId!, userId: id, expiresAt: String(Date.now() + 7 * 60 * 1000) };
+    chrome.storage.local.set({ sessionStatus: sesstionStatusRef.current });
+    setUserId(authResult.dBUserId!);
     detectSite((hostname) => {
       setCurrentSite(hostname);
-      setIsLoggedIn(true);
+      setAuthState({ status: "loggedIn", dBUserId: authResult.dBUserId });
     });
   }
 
   useEffect(() => {
     validateLocalStorageInfo(
       (sessionStatus) => {
-        setUserId(decryptPassword(sessionStatus.userId, import.meta.env.VITE_USERID_SALT));
+        sesstionStatusRef.current = { dBUserId: sessionStatus.dBUserId, userId: sessionStatus.userId, expiresAt: sessionStatus.expiresAt };
+        setUserId(sessionStatus.dBUserId);
         detectSite((hostname) => {
           setCurrentSite(hostname);
-          setIsLoggedIn(true);
+          setAuthState({ status: "loggedIn", dBUserId: sessionStatus.dBUserId });
         });
       },
       () => {
@@ -138,23 +155,23 @@ export default function Popup() {
   const inbox = useInbox(userId, currentSite);
 
   const onLogout = useCallback(() => {
-    setIsLoggedIn(false);
+    setAuthState({ status: "loggedOut" });
     chrome.storage.local.remove("sessionStatus");
-  }, [setIsLoggedIn]);
+  }, [setAuthState]);
 
   useEffect(() => {
-    if (isLoggedIn && currentSite) {
+    if (authState?.status === "loggedIn" && currentSite) {
       inbox.fetchSavedInboxes();
     }
-  }, [isLoggedIn, currentSite]);
+  }, [authState, currentSite]);
 
-  if (!isLoggedIn) {
-    return <LoginScreen onLogin={handleLogin} />;
+  if (authState === null || authState.status === "error" || authState.status === "loggedOut") {
+    return <LoginScreen onLogin={handleLogin} authState={authState} />;
   }
 
   return (
     <div className="flex flex-col bg-white rounded-xl border border-black/10 m-2 overflow-hidden">
-      <Header userId={userId} onLogout={onLogout} />
+      <Header userId={sesstionStatusRef.current?.userId} onLogout={onLogout} />
       <TabBar activeTab={activeTab} onChange={setActiveTab} />
       <div className="flex-1">
         {activeTab === "otp" ? (
