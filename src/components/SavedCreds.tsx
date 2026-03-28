@@ -42,9 +42,10 @@ function SavedCreds({
     const [copied, setCopied] = useState<string | null>(null);
 
     const copy = (text: string, key: string) => {
-        navigator.clipboard.writeText(text);
-        setCopied(key);
-        setTimeout(() => setCopied(null), 1500);
+        navigator.clipboard.writeText(text).then(() => {
+            setCopied(key);
+            setTimeout(() => setCopied(null), 1500);
+        })
     };
 
     const toggleReveal = (id: string) => {

@@ -49,9 +49,10 @@ function OTPListener({
     }, [activeInbox])
 
     const copy = (text: string, btnId: string) => {
-        navigator.clipboard.writeText(text);
-        setCopied(prev => ({ ...prev, [btnId]: true }));
-        setTimeout(() => setCopied(prev => ({ ...prev, [btnId]: false })), 1500);
+        navigator.clipboard.writeText(text).then(() => {
+            setCopied(prev => ({ ...prev, [btnId]: true }));
+            setTimeout(() => setCopied(prev => ({ ...prev, [btnId]: false })), 1500);
+        })
     };
 
     return (
