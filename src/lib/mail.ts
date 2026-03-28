@@ -1,4 +1,5 @@
 import { extractOTP } from "./otp";
+import { generateStrongPassword } from "../utils/generic-utils";
 
 const BASE_URL = "https://api.mail.tm";
 
@@ -17,7 +18,7 @@ async function getDomain(): Promise<string> {
 export async function createInbox(): Promise<Inbox> {
     const domain = await getDomain();
     const username = Math.random().toString(36).substring(2, 10);
-    const password = Math.random().toString(36).substring(2, 18);
+    const password = generateStrongPassword();
     const address = `${username}@${domain}`;
 
     const res = await fetch(`${BASE_URL}/accounts`, {

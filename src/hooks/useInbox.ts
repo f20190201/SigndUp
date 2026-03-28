@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { addNewInboxToDb, deleteInboxFromDb, getSavedInboxesFromDb } from "../utils/supabase-utils";
 import { createInbox, listenForOTP, type Inbox } from "../lib/mail";
 import { decryptPassword, encryptPassword } from "../lib/crypto";

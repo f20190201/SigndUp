@@ -105,3 +105,34 @@ export function setSessionStatus(authState: AuthState) {
             break;
     }
 }
+
+export function generateStrongPassword(length = 10) {
+    const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const lower = "abcdefghijklmnopqrstuvwxyz";
+    const numbers = "0123456789";
+    const symbols = "!@#$%^&*()";
+
+    const all = upper + lower + numbers + symbols;
+
+    function getRandomChar(str: string) {
+        const arr = new Uint32Array(1);
+        crypto.getRandomValues(arr);
+        return str[arr[0] % str.length];
+    }
+
+    let password = [
+        getRandomChar(upper),
+        getRandomChar(lower),
+        getRandomChar(numbers),
+        getRandomChar(symbols),
+    ];
+
+    for (let i = password.length; i < length; i++) {
+        password.push(getRandomChar(all));
+    }
+
+    // Shuffle
+    password = password.sort(() => Math.random() - 0.5);
+
+    return password.join("");
+}

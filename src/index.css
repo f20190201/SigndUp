@@ -43,3 +43,29 @@ button:not(:disabled) {
     background-position: -200% 0;
   }
 }
+
+@keyframes toastFade {
+  0% {
+    opacity: 0;
+    transform: translate(0, 10px);
+  }
+
+  10% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+
+  85% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(0, 10px);
+  }
+}
+
+.animate-toast {
+  animation: toastFade 2.5s ease forwards;
+}

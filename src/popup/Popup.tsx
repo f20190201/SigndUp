@@ -5,6 +5,8 @@ import { detectSite, validateLocalStorageInfo, handleSignUpSignIn, type AuthStat
 import LoginScreen from "../components/library/LoginScreen";
 import IconMail from "../components/library/IconMail";
 import IconList from "../components/library/IconList";
+import { signOut } from "../utils/supabase-utils";
+import { useToast, type ToastType } from "../hooks/useToast";
 const OTPListener = lazy(() => import("../components/OTPListener"));
 const SavedCreds = lazy(() => import("../components/SavedCreds"));
 
@@ -34,13 +36,25 @@ export default function Popup() {
   const [authState, setAuthState] = useState<AuthState>({ status: "loggedOut" });
   const [currentSite, setCurrentSite] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("otp");
+  const { showToast, Toast } = useToast();
 
   const inbox = useInbox(authState.status === "loggedIn" ? authState.dBUserId : "", currentSite);
 
   const onLogout = useCallback(() => {
-    setAuthState({ status: "loggedOut" });
-    chrome.storage.local.remove("sessionStatus");
-    inbox.stopListener?.();
+    signOut().then(({ error }) => {
+      if (!!error) {
+        console.log(error);
+        showToast("Failed to logout", "error");
+      } else {
+        setAuthState({ status: "loggedOut" });
+        chrome.storage.local.remove("sessionStatus");
+        inbox.stopListener?.()
+        showToast("Logged out successfully", "success");
+      }
+    }).catch((err) => {
+      console.log(err);
+    })
+
   }, [setAuthState, inbox]);
 
   async function handleLogin(loginUserId: string, password: string, setIsLoginLoading: (value: boolean) => void) {
@@ -81,41 +95,44 @@ export default function Popup() {
     }
   }, [authState, currentSite]);
 
-  if (authState === null || authState.status === "error" || authState.status === "loggedOut") {
-    return <LoginScreen onLogin={handleLogin} authState={authState} />;
-  }
-
   return (
-    <div className="flex flex-col bg-white rounded-xl border border-black/10 m-2 overflow-hidden">
-      <Header userId={authState.status === "loggedIn" ? authState.loginUserId : ""} onLogout={onLogout} />
-      <TabBar activeTab={activeTab} onChange={setActiveTab} />
-      <div className="flex-1">
-        {activeTab === "otp" ? (
-          <OTPListener
-            currentSite={currentSite}
-            activeInbox={inbox.activeInbox}
-            otpState={inbox.otpState}
-            otp={inbox.otp}
-            rawMessage={inbox.rawMessage}
-            otpTimestamp={inbox.timestamp}
-            loading={inbox.loading}
-            error={inbox.error}
-            onGenerate={inbox.generateNewInbox}
-            onRefresh={inbox.refresh}
-            userId={authState.status === "loggedIn" ? authState.dBUserId : ""}
-            onSelect={inbox.selectInbox}
-          />
-        ) : (
-          <SavedCreds
-            currentSite={currentSite}
-            savedInboxes={inbox.savedInboxes}
-            activeInbox={inbox.activeInbox}
-            onSelect={inbox.selectInbox}
-            userId={authState.status === "loggedIn" ? authState.dBUserId : ""}
-            onDelete={inbox.deleteInbox}
-          />
-        )}
-      </div>
-    </div>
+    <>
+      <Toast />
+      {authState.status === "loggedOut" || authState.status === "error" ? (
+        <LoginScreen onLogin={handleLogin} authState={authState} />
+      ) : (
+        <div className="flex flex-col bg-white rounded-xl border border-black/10 m-2 overflow-hidden">
+          <Header userId={authState.status === "loggedIn" ? authState.loginUserId : ""} onLogout={onLogout} />
+          <TabBar activeTab={activeTab} onChange={setActiveTab} />
+          <div className="flex-1">
+            {activeTab === "otp" ? (
+              <OTPListener
+                currentSite={currentSite}
+                activeInbox={inbox.activeInbox}
+                otpState={inbox.otpState}
+                otp={inbox.otp}
+                rawMessage={inbox.rawMessage}
+                otpTimestamp={inbox.timestamp}
+                loading={inbox.loading}
+                error={inbox.error}
+                onGenerate={inbox.generateNewInbox}
+                onRefresh={inbox.refresh}
+                userId={authState.status === "loggedIn" ? authState.dBUserId : ""}
+                onSelect={inbox.selectInbox}
+              />
+            ) : (
+              <SavedCreds
+                currentSite={currentSite}
+                savedInboxes={inbox.savedInboxes}
+                activeInbox={inbox.activeInbox}
+                onSelect={inbox.selectInbox}
+                userId={authState.status === "loggedIn" ? authState.dBUserId : ""}
+                onDelete={inbox.deleteInbox}
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

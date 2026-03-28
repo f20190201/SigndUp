@@ -51,3 +51,7 @@ export async function deleteInboxFromDb(inboxId: string) {
         .delete()
         .eq("inbox_id", inboxId);
 }
+
+export async function signOut() {
+    return await supabase.auth.signOut();
+}
