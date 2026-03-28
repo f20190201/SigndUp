@@ -1,10 +1,17 @@
 import { getDomain } from "tldts";
 import { loginUser, addNewUserToDb } from "./supabase-utils";
+import type { Session, User, AuthError } from "@supabase/supabase-js";
 
 export type AuthState =
     | { status: "loggedOut" }
-    | { status: "loggedIn", dBUserId: string | undefined }
+    | { status: "loggedIn", dBUserId: string, loginUserId: string }
     | { status: "error"; message: string };
+
+type SessionStatus = {
+    dBUserId: string;
+    loginUserId: string;
+    expiresAt: string;
+}
 
 export function detectSite(callback: (hostname: string) => void) {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -25,9 +32,9 @@ export function detectSite(callback: (hostname: string) => void) {
     });
 }
 
-export function validateLocalStorageInfo(validSessionCallback: (sessionStatus: Record<string, string>) => void, invalidSessionCallback: () => void) {
-    chrome.storage.local.get("sessionStatus", (result: Record<string, Record<string, string>>) => {
-        if (result.sessionStatus?.userId && Number(result.sessionStatus?.expiresAt) > Date.now()) {
+export function validateLocalStorageInfo(validSessionCallback: (sessionStatus: SessionStatus) => void, invalidSessionCallback: () => void) {
+    chrome.storage.local.get("sessionStatus", (result: Record<string, SessionStatus>) => {
+        if (result.sessionStatus?.dBUserId && Number(result.sessionStatus?.expiresAt) > Date.now()) {
             validSessionCallback(result.sessionStatus);
         } else {
             invalidSessionCallback();
@@ -35,18 +42,66 @@ export function validateLocalStorageInfo(validSessionCallback: (sessionStatus: R
     })
 }
 
-export async function handleSignUpSignIn(userId: string, password: string): Promise<AuthState> {
+async function doesUserAlreadyExist(signUpUser: User | null, signUpSession: Session | null, signUpError: AuthError | null) {
+    if (signUpUser === null && signUpSession === null && signUpError?.code === "user_already_exists") {
+        return true;
+    }
+    return false;
+}
 
-    const { data: { user, session }, error } = await addNewUserToDb(userId, password);
-    if (user === null && session === null && error?.code === "user_already_exists") {
+export async function handleSignUpSignIn(loginUserId: string, password: string): Promise<AuthState> {
 
-        const { data: { user, session }, error: _error } = await loginUser(userId, password);
+    const { data: { user: signUpUser, session: signUpSession }, error: signUpError } = await addNewUserToDb(loginUserId, password);
+
+    if (await doesUserAlreadyExist(signUpUser, signUpSession, signUpError)) {
+        const { data: { user, session }, error: _error } = await loginUser(loginUserId, password);
         if (user !== null && session !== null) {
-            return { status: "loggedIn", dBUserId: user.id };
+            return { status: "loggedIn", dBUserId: user.id, loginUserId: loginUserId };
         } else {
             return { status: "error", message: "Invalid password" };
         }
     } else {
-        return { status: "loggedIn", dBUserId: user?.id };
+        if (signUpUser !== null && signUpSession !== null) {
+            return { status: "loggedIn", dBUserId: signUpUser.id, loginUserId: loginUserId };
+        } else {
+            return { status: "error", message: "Failed to authenticate" };
+        }
+    }
+}
+
+export function isValidSession(authState: AuthState) {
+    switch (authState.status) {
+        case "loggedIn":
+            return true;
+        case "loggedOut":
+            return false;
+        case "error":
+            return false;
+    }
+}
+
+export function getValidDbUserId(authState: AuthState) {
+    switch (authState.status) {
+        case "loggedIn":
+            return authState.dBUserId;
+        case "loggedOut":
+            return null;
+        case "error":
+            return null;
+    }
+}
+
+export function setSessionStatus(authState: AuthState) {
+    switch (authState.status) {
+        case "loggedIn":
+            const sessionStatus: SessionStatus = { dBUserId: authState.dBUserId, loginUserId: authState.loginUserId, expiresAt: String(Date.now() + 7 * 60 * 1000) };
+            chrome.storage.local.set({ sessionStatus });
+            break;
+        case "loggedOut":
+            chrome.storage.local.remove("sessionStatus");
+            break;
+        case "error":
+            chrome.storage.local.remove("sessionStatus");
+            break;
     }
 }

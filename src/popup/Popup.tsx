@@ -4,17 +4,11 @@ import OTPListener from "../components/OTPListener";
 import SavedCreds from "../components/SavedCreds";
 import { useInbox } from "../hooks/useInbox";
 import { encryptPassword, decryptPassword } from "../lib/crypto";
-import { detectSite, validateLocalStorageInfo, handleSignUpSignIn, type AuthState } from "../utils/generic-utils";
+import { detectSite, validateLocalStorageInfo, handleSignUpSignIn, type AuthState, isValidSession, setSessionStatus } from "../utils/generic-utils";
 import PasswordInput from "../components/library/PasswordInput";
 import UserIdInput from "../components/library/UserIdInput";
 
 type Tab = "otp" | "creds";
-
-type SessionStatus = {
-  dBUserId: string;
-  userId: string;
-  expiresAt: string;
-}
 
 const LoginScreen = memo(function ({ onLogin, authState }: { onLogin: (id: string, password: string) => void, authState: AuthState | null }) {
   const [credsObj, setCredsObj] = useState({ userId: "", password: "" });
@@ -115,35 +109,39 @@ const IconList = memo(() => {
 })
 
 export default function Popup() {
-  const [authState, setAuthState] = useState<AuthState | null>(null);
-  const [userId, setUserId] = useState("");
+  const [authState, setAuthState] = useState<AuthState>({ status: "loggedOut" });
   const [currentSite, setCurrentSite] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("otp");
-  const sesstionStatusRef = useRef<SessionStatus | null>(null);
 
-  async function handleLogin(id: string, password: string) {
-    let authResult = await handleSignUpSignIn(id, password)
-    if (authResult.status === "error" || authResult.status === "loggedOut") {
-      setAuthState(authResult);
+  const inbox = useInbox(authState.status === "loggedIn" ? authState.dBUserId : "", currentSite);
+
+  const onLogout = useCallback(() => {
+    setAuthState({ status: "loggedOut" });
+    chrome.storage.local.remove("sessionStatus");
+    inbox.stopListener?.();
+  }, [setAuthState, inbox]);
+
+  async function handleLogin(loginUserId: string, password: string) {
+    let authResult = await handleSignUpSignIn(loginUserId, password)
+    setAuthState(authResult);
+    if (!isValidSession(authResult)) {
       return;
     }
-    sesstionStatusRef.current = { dBUserId: authResult.dBUserId!, userId: id, expiresAt: String(Date.now() + 7 * 60 * 1000) };
-    chrome.storage.local.set({ sessionStatus: sesstionStatusRef.current });
-    setUserId(authResult.dBUserId!);
-    detectSite((hostname) => {
-      setCurrentSite(hostname);
-      setAuthState({ status: "loggedIn", dBUserId: authResult.dBUserId });
-    });
+
+    setSessionStatus(authResult);
+    if (authResult.status === "loggedIn") {
+      detectSite((hostname) => {
+        setCurrentSite(hostname);
+      });
+    }
   }
 
   useEffect(() => {
     validateLocalStorageInfo(
       (sessionStatus) => {
-        sesstionStatusRef.current = { dBUserId: sessionStatus.dBUserId, userId: sessionStatus.userId, expiresAt: sessionStatus.expiresAt };
-        setUserId(sessionStatus.dBUserId);
         detectSite((hostname) => {
           setCurrentSite(hostname);
-          setAuthState({ status: "loggedIn", dBUserId: sessionStatus.dBUserId });
+          setAuthState({ status: "loggedIn", dBUserId: sessionStatus.dBUserId, loginUserId: sessionStatus.loginUserId });
         });
       },
       () => {
@@ -151,13 +149,6 @@ export default function Popup() {
       }
     )
   }, []);
-
-  const inbox = useInbox(userId, currentSite);
-
-  const onLogout = useCallback(() => {
-    setAuthState({ status: "loggedOut" });
-    chrome.storage.local.remove("sessionStatus");
-  }, [setAuthState]);
 
   useEffect(() => {
     if (authState?.status === "loggedIn" && currentSite) {
@@ -171,7 +162,7 @@ export default function Popup() {
 
   return (
     <div className="flex flex-col bg-white rounded-xl border border-black/10 m-2 overflow-hidden">
-      <Header userId={sesstionStatusRef.current?.userId} onLogout={onLogout} />
+      <Header userId={authState.status === "loggedIn" ? authState.loginUserId : ""} onLogout={onLogout} />
       <TabBar activeTab={activeTab} onChange={setActiveTab} />
       <div className="flex-1">
         {activeTab === "otp" ? (
@@ -186,7 +177,7 @@ export default function Popup() {
             error={inbox.error}
             onGenerate={inbox.generateNewInbox}
             onRefresh={inbox.refresh}
-            userId={userId}
+            userId={authState.status === "loggedIn" ? authState.dBUserId : ""}
             onSelect={inbox.selectInbox}
           />
         ) : (
@@ -195,7 +186,7 @@ export default function Popup() {
             savedInboxes={inbox.savedInboxes}
             activeInbox={inbox.activeInbox}
             onSelect={inbox.selectInbox}
-            userId={userId}
+            userId={authState.status === "loggedIn" ? authState.dBUserId : ""}
             onDelete={inbox.deleteInbox}
           />
         )}

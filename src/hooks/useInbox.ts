@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { addNewInboxToDb, deleteInboxFromDb, getSavedInboxesFromDb } from "../utils/supabase-utils";
 import { createInbox, listenForOTP, type Inbox } from "../lib/mail";
 import { decryptPassword, encryptPassword } from "../lib/crypto";
@@ -33,7 +33,19 @@ export function useInbox(userId: string, websiteUrl: string) {
         }
 
         setSavedInboxes(data ?? []);
-        if (data && data.length > 0) setActiveInbox(data[0]);
+
+        if (data && data.length > 0) {
+            setActiveInbox(data[0]);
+            startListening({
+                id: data[0].id,
+                email: data[0].email_address,
+                password: decryptPassword(data[0].password, userId),
+            });
+        } else {
+            setActiveInbox(null)
+            setOtp(null);
+            setOtpState("idle");
+        }
         setLoading(false);
     }
 
@@ -135,6 +147,7 @@ export function useInbox(userId: string, websiteUrl: string) {
         generateNewInbox,
         selectInbox,
         refresh,
-        deleteInbox
+        deleteInbox,
+        stopListener
     };
 }
