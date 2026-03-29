@@ -17,7 +17,7 @@ type Props = {
 
 const ActiveTag = memo(() => {
     return (
-        <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">
+        <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">
             active
         </span>
     )
@@ -27,7 +27,7 @@ const UseBtn = memo(({ onClick }: { onClick: () => void }) => {
     return (
         <button
             onClick={onClick}
-            className="text-[11px] px-2 py-0.5 rounded-lg border border-black/10 text-black/40 hover:bg-black/5 transition-colors"
+            className="text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full bg-black text-white hover:bg-black/80 transition-all active-shrink shadow-sm"
         >
             Use
         </button>
@@ -46,7 +46,7 @@ function SavedCreds({
 }: Props) {
     const [revealed, setRevealed] = useState<string[]>([]);
     const [copied, setCopied] = useState<string | null>(null);
-    const deleteClickedIdx = useRef<number>(null);
+    const deleteClickedIdx = useRef<number | null>(null);
 
     const copy = (text: string, key: string) => {
         navigator.clipboard.writeText(text).then(() => {
@@ -62,92 +62,106 @@ function SavedCreds({
     };
 
     return (
-        <div className="flex flex-col gap-2.5 p-3.5">
+        <div className="flex flex-col gap-3 p-4 animate-in">
             {currentSite && (
-                <div className="flex items-center gap-2 px-2.5 py-2 bg-black/5 rounded-lg border border-black/10 mb-1">
-                    <div className="w-[18px] h-[18px] rounded-[4px] bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
-                        <span className="text-[10px] font-medium text-white">
+                <div className="flex items-center gap-2.5 px-3 py-2 bg-black/5 rounded-xl border border-black/5 mb-1 transition-all hover:bg-black/[0.07]">
+                    <div className="w-[20px] h-[20px] rounded-md bg-black flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <span className="text-[10px] font-bold text-white">
                             {currentSite[0].toUpperCase()}
                         </span>
                     </div>
-                    <span className="text-[12px] text-black/50">
-                        Saved creds for <span className="text-[#111] font-medium">{currentSite}</span>
+                    <span className="text-[12px] text-black/40 font-medium">
+                        Saved inboxes for <span className="text-black font-semibold">{currentSite}</span>
                     </span>
                 </div>
             )}
 
             {savedInboxes.length === 0 && (
-                <p className="text-[12px] text-black/30 text-center py-6">
-                    No saved inboxes for this site yet.
-                </p>
+                <div className="flex flex-col items-center justify-center py-12 px-6 text-center animate-in">
+                    <div className="w-12 h-12 rounded-full bg-black/5 flex items-center justify-center mb-3">
+                        <svg className="w-6 h-6 text-black/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                    </div>
+                    <p className="text-[13px] text-black/30 font-medium">
+                        No saved inboxes for this site yet.
+                    </p>
+                </div>
             )}
 
-            {savedInboxes.map((cred, i) => (
-                <div key={cred.id} className="border border-black/10 rounded-lg overflow-hidden">
-                    <div className="flex items-center justify-between px-3 py-2 bg-black/5 border-b border-black/10">
-                        <span className="text-[11px] font-mono text-black/40">
-                            #{i + 1} · {new Date(cred.created_at).toLocaleDateString()}
-                        </span>
-                        <div className="flex items-center gap-2">
-                            <button
-                                disabled={activeInbox?.id === cred.id}
-                                onClick={() => {
-                                    deleteClickedIdx.current = i; onDelete(cred.inbox_id, showToast).then(() => {
-                                        deleteClickedIdx.current = null;
-                                    })
-                                }}
-                                className="text-[11px] px-2 py-0.5 rounded-lg border border-red-500 text-red-500 hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {loading && deleteClickedIdx.current === i ? <PulseLoader /> : "Delete"}
-                            </button>
-                            {activeInbox?.id === cred.id && (
-                                <ActiveTag />
-                            )}
-                            {activeInbox?.id !== cred.id && (
-                                <UseBtn onClick={() => onSelect(cred)} />
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 p-3">
-                        <div className="flex flex-col gap-1">
-                            <span className="text-[10px] text-black/30">email</span>
-                            <div className="flex gap-1.5">
-                                <div className="flex-1 h-[30px] rounded-lg border border-black/10 bg-white px-2.5 flex items-center font-mono text-[12px] overflow-hidden whitespace-nowrap">
-                                    {cred.email_address}
-                                </div>
-                                <button
-                                    onClick={() => copy(cred.email_address, `email-${cred.id}`)}
-                                    className="h-[30px] px-2.5 rounded-lg border border-black/10 text-[11px] text-black/40 hover:bg-black/5 transition-colors"
-                                >
-                                    {copied === `email-${cred.id}` ? "Copied!" : "Copy"}
-                                </button>
+            <div className="space-y-3">
+                {savedInboxes.map((cred, i) => (
+                    <div 
+                        key={cred.id} 
+                        className="group border border-black/5 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all duration-300 animate-in ring-1 ring-black/[0.02]"
+                        style={{ animationDelay: `${i * 0.08}s` }}
+                    >
+                        <div className="flex items-center justify-between px-3.5 py-2.5 bg-black/[0.02] border-b border-black/5">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-black/30">
+                                {new Date(cred.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                            <div className="flex items-center gap-2">
+                                {activeInbox?.id === cred.id ? (
+                                    <ActiveTag />
+                                ) : (
+                                    <>
+                                        <UseBtn onClick={() => onSelect(cred)} />
+                                        <button
+                                            onClick={() => {
+                                                deleteClickedIdx.current = i; 
+                                                onDelete(cred.inbox_id, showToast).then(() => {
+                                                    deleteClickedIdx.current = null;
+                                                });
+                                            }}
+                                            className="text-[10px] uppercase font-bold tracking-tight text-red-500/40 hover:text-red-500 transition-colors p-1 active-shrink"
+                                        >
+                                            {loading && deleteClickedIdx.current === i ? <PulseLoader /> : "Delete"}
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-1">
-                            <span className="text-[10px] text-black/30">password</span>
-                            <div className="flex gap-1.5">
-                                <div className="flex-1 h-[30px] rounded-lg border border-black/10 bg-white px-2.5 flex items-center font-mono text-[12px] tracking-widest overflow-hidden whitespace-nowrap">
-                                    {revealed.includes(cred.id) ? decryptPassword(cred.password, userId) : "••••••••••••"}
+                        <div className="flex flex-col gap-3 p-3.5">
+                            <div className="space-y-1">
+                                <span className="text-[10px] uppercase tracking-wider font-bold text-black/20 ml-1">Email</span>
+                                <div className="flex gap-2">
+                                    <div className="flex-1 h-[34px] rounded-xl border border-black/5 bg-black/5 px-3 flex items-center font-mono text-[12px] overflow-hidden whitespace-nowrap text-black/70">
+                                        {cred.email_address}
+                                    </div>
+                                    <button
+                                        onClick={() => copy(cred.email_address, `email-${cred.id}`)}
+                                        className="h-[34px] px-3.5 rounded-xl border border-black/10 text-[11px] font-bold text-black/40 hover:bg-black hover:text-white transition-all active-shrink"
+                                    >
+                                        {copied === `email-${cred.id}` ? "Copied!" : "Copy"}
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => toggleReveal(cred.id)}
-                                    className="h-[30px] px-2.5 rounded-lg border border-black/10 text-[11px] text-black/40 hover:bg-black/5 transition-colors"
-                                >
-                                    {revealed.includes(cred.id) ? "Hide" : "Show"}
-                                </button>
-                                <button
-                                    onClick={() => copy(decryptPassword(cred.password, userId), `pass-${cred.id}`)}
-                                    className="h-[30px] px-2.5 rounded-lg border border-black/10 text-[11px] text-black/40 hover:bg-black/5 transition-colors"
-                                >
-                                    {copied === `pass-${cred.id}` ? "Copied!" : "Copy"}
-                                </button>
+                            </div>
+
+                            <div className="space-y-1">
+                                <span className="text-[10px] uppercase tracking-wider font-bold text-black/20 ml-1">Password</span>
+                                <div className="flex gap-2">
+                                    <div className="flex-1 h-[34px] rounded-xl border border-black/5 bg-black/5 px-3 flex items-center font-mono text-[12px] tracking-widest overflow-hidden whitespace-nowrap text-black/70">
+                                        {revealed.includes(cred.id) ? decryptPassword(cred.password, userId) : "••••••••••••"}
+                                    </div>
+                                    <button
+                                        onClick={() => toggleReveal(cred.id)}
+                                        className="h-[34px] px-3 rounded-xl border border-black/10 text-[11px] font-bold text-black/40 hover:bg-black/5 transition-colors active-shrink"
+                                    >
+                                        {revealed.includes(cred.id) ? "Hide" : "Show"}
+                                    </button>
+                                    <button
+                                        onClick={() => copy(decryptPassword(cred.password, userId), `pass-${cred.id}`)}
+                                        className="h-[34px] px-3.5 rounded-xl border border-black/10 text-[11px] font-bold text-black/40 hover:bg-black hover:text-white transition-all active-shrink"
+                                    >
+                                        {copied === `pass-${cred.id}` ? "Copied!" : "Copy"}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            ))}
+                ))}
+            </div>
         </div>
     );
 }

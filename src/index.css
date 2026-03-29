@@ -1,109 +1,126 @@
 @import "tailwindcss";
 
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9f9f9;
+  --bg-tertiary: #f1f1f1;
+  --text-main: #111111;
+  --text-muted: #666666;
+  --accent: #000000;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --glass: rgba(255, 255, 255, 0.7);
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
-  background: #f5f5f5;
-  color: #111111;
-  min-width: 320px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text-main);
+  min-width: 350px;
+  -webkit-font-smoothing: antialiased;
 }
 
 button:not(:disabled) {
   cursor: pointer;
 }
 
-@keyframes spin-once {
-  from {
-    transform: rotate(0deg);
-  }
+/* Glassmorphism */
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
 
-  to {
-    transform: rotate(360deg);
+/* Entrance Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes spin-once {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .animate-spin-once {
   animation: spin-once 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Shimmer Effect */
 .shimmer {
   background: linear-gradient(90deg,
-      rgba(0, 0, 0, 0.05) 25%,
-      rgba(0, 0, 0, 0.15) 50%,
-      rgba(0, 0, 0, 0.05) 75%);
+      rgba(0, 0, 0, 0.03) 25%,
+      rgba(0, 0, 0, 0.08) 50%,
+      rgba(0, 0, 0, 0.03) 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.2s infinite linear;
+  animation: shimmer 1.5s infinite linear;
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-
-  100% {
-    background-position: -200% 0;
-  }
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
+/* Toast Animation */
 @keyframes toastFade {
-  0% {
-    opacity: 0;
-    transform: translate(0, 10px);
-  }
-
-  10% {
-    opacity: 1;
-    transform: translate(0, 0);
-  }
-
-  85% {
-    opacity: 1;
-    transform: translate(0, 0);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translate(0, 10px);
-  }
+  0% { opacity: 0; transform: translateY(12px) scale(0.95); }
+  10% { opacity: 1; transform: translateY(0) scale(1); }
+  90% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-12px) scale(0.95); }
 }
 
 .animate-toast {
-  animation: toastFade 2.5s ease forwards;
+  animation: toastFade 3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Dot Loader */
 .dot-loader {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
 }
 
 .dot-loader span {
-  width: 6px;
-  height: 6px;
-  background: black;
+  width: 5px;
+  height: 5px;
+  background: currentColor;
   border-radius: 50%;
   opacity: 0.3;
   animation: pulse 1s infinite ease-in-out;
 }
 
-.dot-loader span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.dot-loader span:nth-child(3) {
-  animation-delay: 0.4s;
-}
+.dot-loader span:nth-child(2) { animation-delay: 0.2s; }
+.dot-loader span:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes pulse {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.85); }
+  40% { opacity: 1; transform: scale(1); }
+}
 
-  0%,
-  80%,
-  100% {
-    opacity: 0.3;
-    transform: scale(0.8);
-  }
+/* Micro-interactions */
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
 
-  40% {
-    opacity: 1;
-    transform: scale(1);
-  }
+.hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.active-shrink {
+  transition: transform 0.1s ease;
+}
+
+.active-shrink:active {
+  transform: scale(0.97);
 }

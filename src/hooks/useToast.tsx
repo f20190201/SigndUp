@@ -22,7 +22,7 @@ export function useToast() {
         return (
             <div
                 onAnimationEnd={() => setMessage(null)}
-                style={{ width: "85%" }}
+                style={{ width: "85%", zIndex: 9999 }}
                 className={`fixed bottom-5 left-1/2 -translate-x-1/2 
         px-3 py-2 rounded-lg text-white text-sm shadow-lg text-center
         animate-toast ${toastColors[message.type]}`}

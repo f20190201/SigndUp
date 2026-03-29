@@ -101,36 +101,40 @@ export default function Popup() {
       {authState.status === "loggedOut" || authState.status === "error" ? (
         <LoginScreen onLogin={handleLogin} authState={authState} />
       ) : (
-        <div className="flex flex-col bg-white rounded-xl border border-black/10 m-2 overflow-hidden">
+        <div className="flex flex-col bg-white rounded-2xl border border-black/5 m-2.5 overflow-hidden shadow-xl animate-in glass ring-1 ring-black/[0.02]">
           <Header userId={authState.status === "loggedIn" ? authState.loginUserId : ""} onLogout={onLogout} />
           <TabBar activeTab={activeTab} onChange={setActiveTab} />
-          <div className="flex-1">
+          <div className="flex-1 transition-all duration-300 ease-out">
             {activeTab === "otp" ? (
-              <OTPListener
-                currentSite={currentSite}
-                activeInbox={inbox.activeInbox}
-                otpState={inbox.otpState}
-                otp={inbox.otp}
-                rawMessage={inbox.rawMessage}
-                otpTimestamp={inbox.timestamp}
-                loading={inbox.loading}
-                error={inbox.error}
-                onGenerate={inbox.generateNewInbox}
-                onRefresh={inbox.refresh}
-                userId={authState.status === "loggedIn" ? authState.dBUserId : ""}
-                onSelect={inbox.selectInbox}
-              />
+              <div className="animate-in" key="otp-tab">
+                <OTPListener
+                  currentSite={currentSite}
+                  activeInbox={inbox.activeInbox}
+                  otpState={inbox.otpState}
+                  otp={inbox.otp}
+                  rawMessage={inbox.rawMessage}
+                  otpTimestamp={inbox.timestamp}
+                  loading={inbox.loading}
+                  error={inbox.error}
+                  onGenerate={inbox.generateNewInbox}
+                  onRefresh={inbox.refresh}
+                  userId={authState.status === "loggedIn" ? authState.dBUserId : ""}
+                  onSelect={inbox.selectInbox}
+                />
+              </div>
             ) : (
-              <SavedCreds
-                currentSite={currentSite}
-                savedInboxes={inbox.savedInboxes}
-                activeInbox={inbox.activeInbox}
-                onSelect={inbox.selectInbox}
-                userId={authState.status === "loggedIn" ? authState.dBUserId : ""}
-                onDelete={inbox.deleteInbox}
-                loading={inbox.loading}
-                showToast={showToast}
-              />
+              <div className="animate-in" key="creds-tab">
+                <SavedCreds
+                  currentSite={currentSite}
+                  savedInboxes={inbox.savedInboxes}
+                  activeInbox={inbox.activeInbox}
+                  onSelect={inbox.selectInbox}
+                  userId={authState.status === "loggedIn" ? authState.dBUserId : ""}
+                  onDelete={inbox.deleteInbox}
+                  loading={inbox.loading}
+                  showToast={showToast}
+                />
+              </div>
             )}
           </div>
         </div>
