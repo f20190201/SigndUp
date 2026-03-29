@@ -1,6 +1,8 @@
-import { useState, memo } from "react";
+import { useState, memo, useRef } from "react";
 import { type SavedInbox } from "../hooks/useInbox";
 import { decryptPassword } from "../lib/crypto";
+import PulseLoader from "./library/PulseLoader";
+import { type ToastType } from "../hooks/useToast";
 
 type Props = {
     currentSite: string;
@@ -8,7 +10,9 @@ type Props = {
     activeInbox: SavedInbox | null;
     onSelect: (inbox: SavedInbox) => void;
     userId: string;
-    onDelete: (id: string) => void;
+    onDelete: (id: string, showToast: (message: string, type: ToastType) => void) => Promise<void>;
+    loading: boolean;
+    showToast: (message: string, type: ToastType) => void;
 };
 
 const ActiveTag = memo(() => {
@@ -36,10 +40,13 @@ function SavedCreds({
     activeInbox,
     onSelect,
     userId,
-    onDelete
+    onDelete,
+    loading,
+    showToast
 }: Props) {
     const [revealed, setRevealed] = useState<string[]>([]);
     const [copied, setCopied] = useState<string | null>(null);
+    const deleteClickedIdx = useRef<number>(null);
 
     const copy = (text: string, key: string) => {
         navigator.clipboard.writeText(text).then(() => {
@@ -84,10 +91,14 @@ function SavedCreds({
                         <div className="flex items-center gap-2">
                             <button
                                 disabled={activeInbox?.id === cred.id}
-                                onClick={() => onDelete(cred.inbox_id)}
+                                onClick={() => {
+                                    deleteClickedIdx.current = i; onDelete(cred.inbox_id, showToast).then(() => {
+                                        deleteClickedIdx.current = null;
+                                    })
+                                }}
                                 className="text-[11px] px-2 py-0.5 rounded-lg border border-red-500 text-red-500 hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Delete
+                                {loading && deleteClickedIdx.current === i ? <PulseLoader /> : "Delete"}
                             </button>
                             {activeInbox?.id === cred.id && (
                                 <ActiveTag />

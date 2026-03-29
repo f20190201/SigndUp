@@ -128,6 +128,8 @@ export default function Popup() {
                 onSelect={inbox.selectInbox}
                 userId={authState.status === "loggedIn" ? authState.dBUserId : ""}
                 onDelete={inbox.deleteInbox}
+                loading={inbox.loading}
+                showToast={showToast}
               />
             )}
           </div>

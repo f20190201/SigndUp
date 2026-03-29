@@ -2,6 +2,7 @@ import { useState } from "react";
 import { addNewInboxToDb, deleteInboxFromDb, getSavedInboxesFromDb } from "../utils/supabase-utils";
 import { createInbox, listenForOTP, type Inbox } from "../lib/mail";
 import { decryptPassword, encryptPassword } from "../lib/crypto";
+import { type ToastType } from "./useToast";
 
 export type SavedInbox = {
     id: string;
@@ -23,8 +24,8 @@ export function useInbox(userId: string, websiteUrl: string) {
     const [error, setError] = useState<string | null>(null);
     const [stopListener, setStopListener] = useState<(() => void) | null>(null);
 
-    async function fetchSavedInboxes() {
-        setLoading(true);
+    async function fetchSavedInboxes(src = "generic") {
+        if (src === "generic") setLoading(true);
         const { data, error } = await getSavedInboxesFromDb(userId, websiteUrl);
 
         if (error) {
@@ -114,13 +115,17 @@ export function useInbox(userId: string, websiteUrl: string) {
         setStopListener(() => stop);
     }
 
-    async function deleteInbox(inboxId: string) {
+    async function deleteInbox(inboxId: string, showToast: (message: string, type: ToastType) => void) {
+        setLoading(true);
         const { error } = await deleteInboxFromDb(inboxId);
         if (error) {
             setError("Failed to delete inbox. Try again.");
+            showToast("Failed to delete inbox. Try again.", "error");
+            setLoading(false);
             return;
         }
-        fetchSavedInboxes();
+        fetchSavedInboxes("fromDelete");
+        showToast("Inbox deleted successfully", "success");
     }
 
     function refresh() {
