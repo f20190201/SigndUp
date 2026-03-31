@@ -4,7 +4,7 @@ const PasswordInput = memo(function ({ value, onChange, error }: { value: string
     const [showPassword, setShowPassword] = useState(false);
     return (
         <div className="w-full">
-            <label className="text-[11px] text-black/50">Password (min 6 characters)</label>
+            <label className="text-[11px] text-black/50">Password</label>
             <div className="relative">
                 <input
                     type={showPassword ? "text" : "password"}

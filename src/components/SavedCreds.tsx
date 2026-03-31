@@ -3,6 +3,7 @@ import { type SavedInbox } from "../hooks/useInbox";
 import { decryptPassword } from "../lib/crypto";
 import PulseLoader from "./library/PulseLoader";
 import { type ToastType } from "../hooks/useToast";
+import UseBtn from "./library/UseBtn";
 
 type Props = {
     currentSite: string;
@@ -23,16 +24,6 @@ const ActiveTag = memo(() => {
     )
 })
 
-const UseBtn = memo(({ onClick }: { onClick: () => void }) => {
-    return (
-        <button
-            onClick={onClick}
-            className="text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full bg-black text-white hover:bg-black/80 transition-all active-shrink shadow-sm"
-        >
-            Use
-        </button>
-    )
-})
 
 function SavedCreds({
     currentSite,
@@ -91,8 +82,8 @@ function SavedCreds({
 
             <div className="space-y-3">
                 {savedInboxes.map((cred, i) => (
-                    <div 
-                        key={cred.id} 
+                    <div
+                        key={cred.id}
                         className="group border border-black/5 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all duration-300 animate-in ring-1 ring-black/[0.02]"
                         style={{ animationDelay: `${i * 0.08}s` }}
                     >
@@ -105,10 +96,10 @@ function SavedCreds({
                                     <ActiveTag />
                                 ) : (
                                     <>
-                                        <UseBtn onClick={() => onSelect(cred)} />
+                                        <UseBtn btnText="Use" onClick={() => onSelect(cred)} />
                                         <button
                                             onClick={() => {
-                                                deleteClickedIdx.current = i; 
+                                                deleteClickedIdx.current = i;
                                                 onDelete(cred.inbox_id, showToast).then(() => {
                                                     deleteClickedIdx.current = null;
                                                 });

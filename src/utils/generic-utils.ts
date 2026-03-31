@@ -136,3 +136,16 @@ export function generateStrongPassword(length = 10) {
 
     return password.join("");
 }
+
+export function sendMessageToContentScript(type: string, payload: any): Promise<{ result: string, message: string }> {
+    return new Promise((resolve) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            chrome.tabs.sendMessage(tabs[0].id!, {
+                type: type,
+                payload: payload
+            }, (response) => {
+                resolve(response);
+            });
+        });
+    });
+}

@@ -4,6 +4,8 @@ import InputAndCopyBtnShimmer from "./library/InputAndCopyBtnShimmer";
 import { decryptPassword } from "../lib/crypto";
 import ViewOriginalMessage from "./library/ViewOriginalMessage";
 import RenderIf from "./library/RenderIf";
+import SparklerIcon from "../assets/sparkler.svg"
+import { sendMessageToContentScript } from "../utils/generic-utils";
 
 type OTPState = "idle" | "waiting" | "received" | "no_otp";
 
@@ -21,8 +23,6 @@ type Props = {
     onSelect: (inbox: SavedInbox) => void;
     otpTimestamp: string | null;
 };
-
-const actionBtnClassName = "h-[34px] px-3 rounded-lg border border-black/20 text-[12px] text-black/60 hover:bg-black/5 transition-colors"
 
 function OTPListener({
     currentSite,
@@ -55,6 +55,11 @@ function OTPListener({
         })
     };
 
+    async function handleAutoFill(email: string, password: string) {
+        const res = await sendMessageToContentScript("AUTOFILL", { email, password });
+        console.log(res);
+    }
+
     return (
         <div className="flex flex-col gap-3.5 p-4 animate-in">
             {currentSite && (
@@ -69,7 +74,7 @@ function OTPListener({
                     </span>
                 </div>
             )}
-            
+
             <div className="space-y-1">
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-black/30 ml-1">Inbox address</p>
                 {loading ? (
@@ -105,6 +110,14 @@ function OTPListener({
                                 {copied["password"] ? "Copied!" : "Copy"}
                             </button>
                         </div>
+                        <button
+                            onClick={() => handleAutoFill(activeInbox.email_address, decryptPassword(activeInbox.password, userId))}
+                            className="flex flex-row items-center justify-center gap-2 h-[36px] w-full rounded-xl border border-black text-[12px] font-medium text-black/60 hover:bg-black hover:text-white transition-all active-shrink"
+                        >
+                            <span>AutoFill</span>
+
+                            <img src={SparklerIcon} alt="sparkler" className="w-4 h-4" />
+                        </button>
                     </div>
                 )}
             </div>
