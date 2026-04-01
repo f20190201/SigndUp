@@ -6,6 +6,15 @@ function isVisible(el: HTMLElement) {
     );
 }
 
+function isRealInput(input: HTMLInputElement) {
+    return (
+        isVisible(input) &&
+        !input.disabled &&
+        input.tabIndex !== -1 &&
+        input.getAttribute("aria-hidden") !== "true"
+    );
+}
+
 function scoreInputFields(input: HTMLInputElement, credType: string): number {
     let score = 0;
 
@@ -35,8 +44,7 @@ function scoreInputFields(input: HTMLInputElement, credType: string): number {
     if (name.includes("search")) score -= 20;
     if (name.includes("newsletter")) score -= 25;
 
-    if (!isVisible(input)) score -= 100;
-    if (input.disabled) score -= 100;
+    if (!isRealInput(input)) score -= 100;
 
     return score;
 }
@@ -54,7 +62,7 @@ function getBestInput(inputs: HTMLInputElement[], credType: string): HTMLInputEl
         }
     }
 
-    return bestScore > 0 ? best : null;
+    return bestScore > -Infinity ? best : null;
 }
 
 
@@ -62,9 +70,9 @@ function msgToUi(flags: { emailFilled: boolean, passwordFilled: boolean, emailFi
     if (flags.emailFilled && flags.passwordFilled) {
         return { result: "SUCCESS", message: "Autofilled successfully" }
     } else if (flags.emailFilled) {
-        return { result: "PARTIAL", message: "Email autofilled successfully" }
+        return { result: "PARTIAL", message: "Only email autofilled successfully" }
     } else if (flags.passwordFilled) {
-        return { result: "PARTIAL", message: "Password autofilled successfully" }
+        return { result: "PARTIAL", message: "Only password autofilled successfully" }
     } else {
         return { result: "FAILED", message: "Sorry, couldn't identify fields to autofill" }
     }
@@ -95,7 +103,7 @@ function getCredsFields() {
     const emailInput = [
         ...document.querySelectorAll<HTMLInputElement>('input[type="email"]'),
         ...document.querySelectorAll<HTMLInputElement>('input[name*="email"]'),
-        ...document.querySelectorAll<HTMLInputElement>('input[placeholder*="email"]')
+        ...document.querySelectorAll<HTMLInputElement>('input[placeholder*="email" i]')
     ];
 
     const passwordInput = [

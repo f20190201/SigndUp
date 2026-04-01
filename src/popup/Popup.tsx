@@ -120,6 +120,7 @@ export default function Popup() {
                   onRefresh={inbox.refresh}
                   userId={authState.status === "loggedIn" ? authState.dBUserId : ""}
                   onSelect={inbox.selectInbox}
+                  showToast={showToast}
                 />
               </div>
             ) : (

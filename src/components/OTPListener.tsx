@@ -6,6 +6,7 @@ import ViewOriginalMessage from "./library/ViewOriginalMessage";
 import RenderIf from "./library/RenderIf";
 import SparklerIcon from "../assets/sparkler.svg"
 import { sendMessageToContentScript } from "../utils/generic-utils";
+import type { ToastType } from "../hooks/useToast";
 
 type OTPState = "idle" | "waiting" | "received" | "no_otp";
 
@@ -22,6 +23,7 @@ type Props = {
     userId: string;
     onSelect: (inbox: SavedInbox) => void;
     otpTimestamp: string | null;
+    showToast: (message: string, type: ToastType) => void;
 };
 
 function OTPListener({
@@ -36,7 +38,8 @@ function OTPListener({
     onRefresh,
     userId,
     onSelect,
-    otpTimestamp
+    otpTimestamp,
+    showToast
 }: Props) {
     const [copied, setCopied] = useState<Record<string, boolean>>({});
     const [showRaw, setShowRaw] = useState(false);
@@ -57,7 +60,7 @@ function OTPListener({
 
     async function handleAutoFill(email: string, password: string) {
         const res = await sendMessageToContentScript("AUTOFILL", { email, password });
-        console.log(res);
+        showToast(res.message, res.result === "SUCCESS" ? "success" : res.result === "PARTIAL" ? "warning" : "error");
     }
 
     return (
