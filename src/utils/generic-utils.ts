@@ -39,7 +39,7 @@ export function validateLocalStorageInfo(validSessionCallback: (sessionStatus: S
         if (result.sessionStatus?.dBUserId && Number(result.sessionStatus?.expiresAt) > Date.now()) {
             checkTokenValidity(result.sessionStatus.authToken).then((res) => {
                 if (res.data?.user !== null && res.data?.user?.id === result.sessionStatus?.dBUserId) {
-                    validSessionCallback(result.sessionStatus);
+                    validSessionCallback({ ...result.sessionStatus, expiresAt: String(Date.now() + 7 * 60 * 1000) });
                 } else {
                     invalidSessionCallback();
                 }
