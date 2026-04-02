@@ -66,12 +66,14 @@ export async function handleSignUpSignIn(loginUserId: string, password: string):
     if (await doesUserAlreadyExist(signUpUser, signUpSession, signUpError)) {
         const { data: { user, session }, error: _error } = await loginUser(loginUserId, password);
         if (user !== null && session !== null) {
+            chrome.action.setBadgeText({ text: "" });
             return { status: "loggedIn", dBUserId: user.id, loginUserId: loginUserId, authToken: session.access_token };
         } else {
             return { status: "error", message: "Invalid password" };
         }
     } else {
         if (signUpUser !== null && signUpSession !== null) {
+            chrome.action.setBadgeText({ text: "" });
             return { status: "loggedIn", dBUserId: signUpUser.id, loginUserId: loginUserId, authToken: signUpSession.access_token };
         } else {
             return { status: "error", message: "Failed to authenticate" };
