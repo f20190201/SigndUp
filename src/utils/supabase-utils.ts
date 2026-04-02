@@ -55,3 +55,7 @@ export async function deleteInboxFromDb(inboxId: string) {
 export async function signOut() {
     return await supabase.auth.signOut();
 }
+
+export async function checkTokenValidity(authToken: string) {
+    return await supabase.auth.getUser(authToken);
+}

@@ -3,7 +3,7 @@ import { signOut } from "../utils/supabase-utils";
 chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === "sessionTimeout") {
 
-        chrome.storage.local.remove(["sessionStatus"], () => {
+        chrome.storage.session.remove(["sessionStatus"], () => {
             console.log("Session status removed from RAM.");
         });
 

@@ -57,11 +57,11 @@ export default function Popup() {
       (sessionStatus) => {
         detectSite((hostname) => {
           setCurrentSite(hostname);
-          setAuthState({ status: "loggedIn", dBUserId: sessionStatus.dBUserId, loginUserId: sessionStatus.loginUserId });
+          setAuthState({ status: "loggedIn", dBUserId: sessionStatus.dBUserId, loginUserId: sessionStatus.loginUserId, authToken: sessionStatus.authToken });
         });
       },
       () => {
-        chrome.storage.local.remove("sessionStatus");
+        chrome.storage.session.remove("sessionStatus");
       }
     )
   }, []);

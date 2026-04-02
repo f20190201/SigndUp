@@ -1,17 +1,18 @@
 import { getDomain } from "tldts";
-import { loginUser, addNewUserToDb } from "./supabase-utils";
+import { loginUser, addNewUserToDb, checkTokenValidity } from "./supabase-utils";
 import type { Session, User, AuthError } from "@supabase/supabase-js";
 import type { ToastType } from "../hooks/useToast";
 
 export type AuthState =
     | { status: "loggedOut" }
-    | { status: "loggedIn", dBUserId: string, loginUserId: string }
+    | { status: "loggedIn", dBUserId: string, loginUserId: string, authToken: string }
     | { status: "error"; message: string };
 
 type SessionStatus = {
     dBUserId: string;
     loginUserId: string;
     expiresAt: string;
+    authToken: string;
 }
 
 export function detectSite(callback: (hostname: string) => void) {
@@ -34,9 +35,17 @@ export function detectSite(callback: (hostname: string) => void) {
 }
 
 export function validateLocalStorageInfo(validSessionCallback: (sessionStatus: SessionStatus) => void, invalidSessionCallback: () => void) {
-    chrome.storage.local.get("sessionStatus", (result: Record<string, SessionStatus>) => {
+    chrome.storage.session.get("sessionStatus", (result: Record<string, SessionStatus>) => {
         if (result.sessionStatus?.dBUserId && Number(result.sessionStatus?.expiresAt) > Date.now()) {
-            validSessionCallback(result.sessionStatus);
+            checkTokenValidity(result.sessionStatus.authToken).then((res) => {
+                if (res.data?.user !== null && res.data?.user?.id === result.sessionStatus?.dBUserId) {
+                    validSessionCallback(result.sessionStatus);
+                } else {
+                    invalidSessionCallback();
+                }
+            }).catch(() => {
+                invalidSessionCallback();
+            });
         } else {
             invalidSessionCallback();
         }
@@ -57,13 +66,13 @@ export async function handleSignUpSignIn(loginUserId: string, password: string):
     if (await doesUserAlreadyExist(signUpUser, signUpSession, signUpError)) {
         const { data: { user, session }, error: _error } = await loginUser(loginUserId, password);
         if (user !== null && session !== null) {
-            return { status: "loggedIn", dBUserId: user.id, loginUserId: loginUserId };
+            return { status: "loggedIn", dBUserId: user.id, loginUserId: loginUserId, authToken: session.access_token };
         } else {
             return { status: "error", message: "Invalid password" };
         }
     } else {
         if (signUpUser !== null && signUpSession !== null) {
-            return { status: "loggedIn", dBUserId: signUpUser.id, loginUserId: loginUserId };
+            return { status: "loggedIn", dBUserId: signUpUser.id, loginUserId: loginUserId, authToken: signUpSession.access_token };
         } else {
             return { status: "error", message: "Failed to authenticate" };
         }
@@ -95,14 +104,14 @@ export function getValidDbUserId(authState: AuthState) {
 export function setSessionStatus(authState: AuthState) {
     switch (authState.status) {
         case "loggedIn":
-            const sessionStatus: SessionStatus = { dBUserId: authState.dBUserId, loginUserId: authState.loginUserId, expiresAt: String(Date.now() + 7 * 60 * 1000) };
-            chrome.storage.local.set({ sessionStatus });
+            const sessionStatus: SessionStatus = { dBUserId: authState.dBUserId, loginUserId: authState.loginUserId, expiresAt: String(Date.now() + 7 * 60 * 1000), authToken: authState.authToken };
+            chrome.storage.session.set({ sessionStatus });
             break;
         case "loggedOut":
-            chrome.storage.local.remove("sessionStatus");
+            chrome.storage.session.remove("sessionStatus");
             break;
         case "error":
-            chrome.storage.local.remove("sessionStatus");
+            chrome.storage.session.remove("sessionStatus");
             break;
     }
 }
@@ -154,7 +163,7 @@ export function sendMessageToContentScript(type: string, payload: any): Promise<
 export function clearDataOnLogout(setAuthState: (val: AuthState) => void, stopListener: (() => void) | null, showToast: (msg: string, type?: ToastType) => void) {
     chrome.alarms.clear("sessionTimeout");
     setAuthState({ status: "loggedOut" });
-    chrome.storage.local.remove("sessionStatus");
+    chrome.storage.session.remove("sessionStatus");
     stopListener?.()
     showToast("Logged out successfully", "success");
 }
