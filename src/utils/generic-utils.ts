@@ -1,6 +1,7 @@
 import { getDomain } from "tldts";
 import { loginUser, addNewUserToDb } from "./supabase-utils";
 import type { Session, User, AuthError } from "@supabase/supabase-js";
+import type { ToastType } from "../hooks/useToast";
 
 export type AuthState =
     | { status: "loggedOut" }
@@ -148,4 +149,12 @@ export function sendMessageToContentScript(type: string, payload: any): Promise<
             });
         });
     });
+}
+
+export function clearDataOnLogout(setAuthState: (val: AuthState) => void, stopListener: (() => void) | null, showToast: (msg: string, type?: ToastType) => void) {
+    chrome.alarms.clear("sessionTimeout");
+    setAuthState({ status: "loggedOut" });
+    chrome.storage.local.remove("sessionStatus");
+    stopListener?.()
+    showToast("Logged out successfully", "success");
 }

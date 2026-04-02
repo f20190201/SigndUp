@@ -1,36 +1,13 @@
 import { useState, useEffect, memo, useCallback, lazy } from "react";
 import Header from "../components/Header";
 import { useInbox } from "../hooks/useInbox";
-import { detectSite, validateLocalStorageInfo, handleSignUpSignIn, type AuthState, isValidSession, setSessionStatus } from "../utils/generic-utils";
+import { detectSite, validateLocalStorageInfo, handleSignUpSignIn, type AuthState, isValidSession, setSessionStatus, clearDataOnLogout } from "../utils/generic-utils";
 import LoginScreen from "../components/library/LoginScreen";
-import IconMail from "../components/library/IconMail";
-import IconList from "../components/library/IconList";
+import TabBar, { type Tab } from "../components/library/TabBar";
 import { signOut } from "../utils/supabase-utils";
-import { useToast, type ToastType } from "../hooks/useToast";
+import { useToast } from "../hooks/useToast";
 const OTPListener = lazy(() => import("../components/OTPListener"));
 const SavedCreds = lazy(() => import("../components/SavedCreds"));
-
-type Tab = "otp" | "creds";
-
-const TabBar = memo(function ({ activeTab, onChange }: { activeTab: Tab; onChange: (t: Tab) => void }) {
-  return (
-    <div className="flex border-b border-black/10">
-      {(["otp", "creds"] as Tab[]).map((tab) => (
-        <button
-          key={tab}
-          onClick={() => onChange(tab)}
-          className={`flex-1 h-10 flex items-center cursor-pointer justify-center gap-1.5 text-[12px] border-b-[1.5px] transition-colors ${activeTab === tab
-            ? "text-[#111] border-[#111] font-medium"
-            : "text-black/40 border-transparent"
-            }`}
-        >
-          {tab === "otp" ? <IconMail /> : <IconList />}
-          {tab === "otp" ? "Get OTP" : "Saved creds"}
-        </button>
-      ))}
-    </div>
-  );
-})
 
 export default function Popup() {
   const [authState, setAuthState] = useState<AuthState>({ status: "loggedOut" });
@@ -46,10 +23,7 @@ export default function Popup() {
         console.log(error);
         showToast("Failed to logout", "error");
       } else {
-        setAuthState({ status: "loggedOut" });
-        chrome.storage.local.remove("sessionStatus");
-        inbox.stopListener?.()
-        showToast("Logged out successfully", "success");
+        clearDataOnLogout(setAuthState, inbox.stopListener, showToast);
       }
     }).catch((err) => {
       console.log(err);
@@ -76,6 +50,9 @@ export default function Popup() {
   }
 
   useEffect(() => {
+    chrome.alarms.clear("sessionTimeout").then((_) => {
+      chrome.alarms.create("sessionTimeout", { delayInMinutes: 7 });
+    });
     validateLocalStorageInfo(
       (sessionStatus) => {
         detectSite((hostname) => {
