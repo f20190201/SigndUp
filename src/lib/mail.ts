@@ -1,5 +1,6 @@
 import { extractOTP } from "./otp";
 import type { AuthState } from "../utils/generic-utils";
+import DOMPurify from "dompurify";
 
 const BASE_URL = "https://api.signdup.net";
 
@@ -24,6 +25,10 @@ export async function createInbox(websiteUrl: string, authState: AuthState): Pro
         email: account.emailId,
         password: account.password,
     };
+}
+
+function sanitizeHtml(html: string): string {
+    return DOMPurify.sanitize(html);
 }
 
 export async function listenForOTP(
@@ -56,7 +61,7 @@ export async function listenForOTP(
                     lastMessageId = latest.id;
                     const msg = latest;
                     const dirtyText = msg.subject || "" + msg.body || "" + msg.rawMessage || "";
-                    const rawMessage = msg.body || "";
+                    const rawMessage = sanitizeHtml(msg.rawMessage || "");
                     const otp = extractOTP(dirtyText);
 
                     if (otp) {

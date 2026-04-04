@@ -14,9 +14,10 @@ function ViewOriginalMessage({ rawMessage, showRaw, setShowRaw }: { rawMessage: 
                 {showRaw ? "Hide original message" : "View original message"}
             </button>
             {showRaw && (
-                <div className="bg-black/5 rounded-lg p-2.5 text-[11px] font-mono text-black/50 leading-relaxed max-h-[120px] overflow-y-auto whitespace-pre-wrap break-words">
-                    {rawMessage}
-                </div>
+                <div 
+                    className="bg-black/5 rounded-lg p-2.5 text-[11px] font-mono text-black/50 leading-relaxed max-h-[120px] overflow-y-auto break-words"
+                    dangerouslySetInnerHTML={{ __html: rawMessage }}
+                />
             )}
         </div>
     )
