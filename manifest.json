@@ -41,6 +41,7 @@
     "host_permissions": [
         "https://api.mail.tm/*",
         "https://mercure.mail.tm/*",
-        "https://*.supabase.co/*"
+        "https://*.supabase.co/*",
+        "https://api.signdup.net/*"
     ]
 }
