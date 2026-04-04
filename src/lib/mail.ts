@@ -1,7 +1,7 @@
 import { extractOTP } from "./otp";
-import { generateStrongPassword } from "../utils/generic-utils";
+import type { AuthState } from "../utils/generic-utils";
 
-const BASE_URL = "https://api.mail.tm";
+const BASE_URL = "https://api.signdup.net";
 
 export type Inbox = {
     id: string;
@@ -9,50 +9,30 @@ export type Inbox = {
     password: string;
 };
 
-async function getDomain(): Promise<string> {
-    const res = await fetch(`${BASE_URL}/domains`);
-    const data = await res.json();
-    return data["hydra:member"][0].domain;
-}
+export async function createInbox(websiteUrl: string, authState: AuthState): Promise<Inbox> {
 
-export async function createInbox(): Promise<Inbox> {
-    const domain = await getDomain();
-    const username = Math.random().toString(36).substring(2, 10);
-    const password = generateStrongPassword();
-    const address = `${username}@${domain}`;
-
-    const res = await fetch(`${BASE_URL}/accounts`, {
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-inbox`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address, password }),
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authState.status === "loggedIn" ? authState.authToken : undefined}` },
+        body: JSON.stringify({ websiteUrl }),
     });
 
     const account = await res.json();
 
     return {
         id: account.id,
-        email: address,
-        password,
+        email: account.emailId,
+        password: account.password,
     };
-}
-
-async function getToken(email: string, password: string): Promise<string> {
-    const res = await fetch(`${BASE_URL}/token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: email, password }),
-    });
-    const data = await res.json();
-    return data.token;
 }
 
 export async function listenForOTP(
     inbox: Inbox,
     onOTP: (otp: string, raw: string, timestamp: string) => void,
     onNoOTP: (raw: string, timestamp: string) => void,
-    onError: (err: unknown) => void
+    onError: (err: unknown) => void,
+    authState: AuthState
 ): Promise<() => void> {
-    const token = await getToken(inbox.email, inbox.password);
     const controller = new AbortController();
     const { signal } = controller;
     let lastMessageId: string | null = null;
@@ -62,34 +42,30 @@ export async function listenForOTP(
         if (signal.aborted) return;
 
         try {
-            const listRes = await fetch(`${BASE_URL}/messages?page=1`, {
-                headers: { Authorization: `Bearer ${token}` },
+            const listRes = await fetch(`${BASE_URL}/messages?inbox=${inbox.email}`, {
+                headers: { Authorization: `Bearer ${authState.status === "loggedIn" ? authState.authToken : undefined}`, apikey: import.meta.env.VITE_SUPABASE_ANON_KEY },
                 signal,
             });
-            const data = await listRes.json();
-            const messages = data["hydra:member"];
+
+            const messages = await listRes.json();
 
             if (messages && messages.length > 0) {
                 const latest = messages[0];
 
                 if (latest.id !== lastMessageId) {
                     lastMessageId = latest.id;
-
-                    const msgRes = await fetch(`${BASE_URL}/messages/${latest.id}`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                        signal,
-                    });
-                    const msg = await msgRes.json();
-                    const text = msg.text || "" + msg.intro || "" + msg.subject || "";
-                    const otp = extractOTP(text);
+                    const msg = latest;
+                    const dirtyText = msg.subject || "" + msg.body || "" + msg.rawMessage || "";
+                    const rawMessage = msg.body || "";
+                    const otp = extractOTP(dirtyText);
 
                     if (otp) {
-                        onOTP(otp, text, msg.createdAt);
+                        onOTP(otp, rawMessage, msg.createdAt);
                         controller.abort();
                         return;
                     } else {
-                        // email arrived but no OTP detected
-                        onNoOTP(text, msg.createdAt);
+
+                        onNoOTP(rawMessage, msg.createdAt);
                     }
                 }
             }

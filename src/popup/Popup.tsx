@@ -15,7 +15,7 @@ export default function Popup() {
   const [activeTab, setActiveTab] = useState<Tab>("otp");
   const { showToast, Toast } = useToast();
 
-  const inbox = useInbox(authState.status === "loggedIn" ? authState.dBUserId : "", currentSite);
+  const inbox = useInbox(authState.status === "loggedIn" ? authState.dBUserId : "", currentSite, authState);
 
   const onLogout = useCallback(() => {
     signOut().then(({ error }) => {

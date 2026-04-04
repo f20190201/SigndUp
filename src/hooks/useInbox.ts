@@ -3,6 +3,7 @@ import { addNewInboxToDb, deleteInboxFromDb, getSavedInboxesFromDb } from "../ut
 import { createInbox, listenForOTP, type Inbox } from "../lib/mail";
 import { decryptPassword, encryptPassword } from "../lib/crypto";
 import { type ToastType } from "./useToast";
+import type { AuthState } from "../utils/generic-utils";
 
 export type SavedInbox = {
     id: string;
@@ -14,7 +15,7 @@ export type SavedInbox = {
 
 export type OTPState = "idle" | "waiting" | "received" | "no_otp";
 
-export function useInbox(userId: string, websiteUrl: string) {
+export function useInbox(userId: string, websiteUrl: string, authState: AuthState) {
     const [savedInboxes, setSavedInboxes] = useState<SavedInbox[]>([]);
     const [activeInbox, setActiveInbox] = useState<SavedInbox | null>(null);
     const [otp, setOtp] = useState<{ otp: string, timestamp: string } | null>(null);
@@ -55,18 +56,20 @@ export function useInbox(userId: string, websiteUrl: string) {
         setError(null);
 
         try {
-            const inbox = await createInbox();
-            const encrypted = encryptPassword(inbox.password, userId);
+            const inbox = await createInbox(websiteUrl, authState);
+            // const encrypted = encryptPassword(inbox.password, userId);
 
-            const { data, error } = await addNewInboxToDb(userId, websiteUrl, inbox.id, inbox.email, encrypted)
+            // const { data, error } = await addNewInboxToDb(userId, websiteUrl, inbox.id, inbox.email, encrypted)
 
-            if (error) throw error;
+            // if (error) throw error;
 
-            setSavedInboxes((prev) => [data, ...prev]);
-            setActiveInbox(data);
+            let savedInbox: SavedInbox = { id: inbox.id, email_address: inbox.email, password: inbox.password, created_at: new Date().toISOString(), inbox_id: inbox.id }
+
+            setSavedInboxes((prev) => [savedInbox, ...prev]);
+            setActiveInbox(savedInbox);
 
             await startListening({
-                id: data.id,
+                id: inbox.id,
                 email: inbox.email,
                 password: inbox.password
             });
@@ -109,7 +112,8 @@ export function useInbox(userId: string, websiteUrl: string) {
             (err) => {
                 console.error("Poll error:", err);
                 setOtpState("idle");
-            }
+            },
+            authState
         );
 
         setStopListener(() => stop);
