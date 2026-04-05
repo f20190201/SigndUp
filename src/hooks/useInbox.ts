@@ -57,12 +57,6 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
 
         try {
             const inbox = await createInbox(websiteUrl, authState);
-            // const encrypted = encryptPassword(inbox.password, userId);
-
-            // const { data, error } = await addNewInboxToDb(userId, websiteUrl, inbox.id, inbox.email, encrypted)
-
-            // if (error) throw error;
-
             let savedInbox: SavedInbox = { id: inbox.id, email_address: inbox.email, password: inbox.password, created_at: new Date().toISOString(), inbox_id: inbox.id }
 
             setSavedInboxes((prev) => [savedInbox, ...prev]);
@@ -119,9 +113,9 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
         setStopListener(() => stop);
     }
 
-    async function deleteInbox(inboxId: string, showToast: (message: string, type: ToastType) => void) {
+    async function deleteInbox(emailId: string, showToast: (message: string, type: ToastType) => void) {
         setLoading(true);
-        const { error } = await deleteInboxFromDb(inboxId);
+        const { error } = await deleteInboxFromDb(websiteUrl, emailId, authState);
         if (error) {
             setError("Failed to delete inbox. Try again.");
             showToast("Failed to delete inbox. Try again.", "error");

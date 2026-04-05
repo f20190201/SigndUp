@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import type { AuthState } from "./generic-utils";
 
 export async function addNewUserToDb(userId: string, password: string) {
     return await supabase.auth.signUp({
@@ -45,11 +46,15 @@ export async function addNewInboxToDb(userId: string, websiteUrl: string, inboxI
         .single();
 }
 
-export async function deleteInboxFromDb(inboxId: string) {
-    return supabase
-        .from("user_site_inboxes")
-        .delete()
-        .eq("inbox_id", inboxId);
+export async function deleteInboxFromDb(websiteUrl: string, emailId: string, authState: AuthState) {
+
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-inbox`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authState.status === "loggedIn" ? authState.authToken : undefined}` },
+        body: JSON.stringify({ websiteUrl, emailId }),
+    });
+
+    return res.json();
 }
 
 export async function signOut() {

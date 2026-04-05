@@ -11,7 +11,7 @@ type Props = {
     activeInbox: SavedInbox | null;
     onSelect: (inbox: SavedInbox) => void;
     userId: string;
-    onDelete: (id: string, showToast: (message: string, type: ToastType) => void) => Promise<void>;
+    onDelete: (emailId: string, showToast: (message: string, type: ToastType) => void) => Promise<void>;
     loading: boolean;
     showToast: (message: string, type: ToastType) => void;
 };
@@ -100,7 +100,7 @@ function SavedCreds({
                                         <button
                                             onClick={() => {
                                                 deleteClickedIdx.current = i;
-                                                onDelete(cred.inbox_id, showToast).then(() => {
+                                                onDelete(cred.email_address, showToast).then(() => {
                                                     deleteClickedIdx.current = null;
                                                 });
                                             }}
