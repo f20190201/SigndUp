@@ -7,6 +7,7 @@ function ViewOriginalMessage({ rawMessage, showRaw, setShowRaw }: { rawMessage: 
     return (
 
         <div className="m-2">
+            <div className="mb-1 text-black/70 text-[11px]">For verification links, right click on the button to open in a new tab or copy/paste</div>
             <button
                 onClick={() => setShowRaw((p) => !p)}
                 className="text-[11px] text-black/40 hover:text-black/70 underline underline-offset-2 text-left transition-colors cursor-pointer"
@@ -14,7 +15,7 @@ function ViewOriginalMessage({ rawMessage, showRaw, setShowRaw }: { rawMessage: 
                 {showRaw ? "Hide original message" : "View original message"}
             </button>
             {showRaw && (
-                <div 
+                <div
                     className="bg-black/5 rounded-lg p-2.5 text-[11px] font-mono text-black/50 leading-relaxed max-h-[120px] overflow-y-auto break-words"
                     dangerouslySetInnerHTML={{ __html: rawMessage }}
                 />
