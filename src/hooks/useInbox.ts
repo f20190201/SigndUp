@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { addNewInboxToDb, deleteInboxFromDb, getSavedInboxesFromDb } from "../utils/supabase-utils";
+import { deleteInboxFromDb, getSavedInboxesFromDb } from "../utils/supabase-utils";
 import { createInbox, listenForOTP, type Inbox } from "../lib/mail";
-import { decryptPassword, encryptPassword } from "../lib/crypto";
+import { decryptPassword } from "../lib/crypto";
 import { type ToastType } from "./useToast";
 import type { AuthState } from "../utils/generic-utils";
 
@@ -15,6 +15,8 @@ export type SavedInbox = {
 
 export type OTPState = "idle" | "waiting" | "received" | "no_otp";
 
+export type SavedInboxFetchSource = "generic" | "fromDelete";
+
 export function useInbox(userId: string, websiteUrl: string, authState: AuthState) {
     const [savedInboxes, setSavedInboxes] = useState<SavedInbox[]>([]);
     const [activeInbox, setActiveInbox] = useState<SavedInbox | null>(null);
@@ -25,7 +27,7 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
     const [error, setError] = useState<string | null>(null);
     const [stopListener, setStopListener] = useState<(() => void) | null>(null);
 
-    async function fetchSavedInboxes(src = "generic") {
+    async function fetchSavedInboxes(src: SavedInboxFetchSource = "generic") {
         if (src === "generic") setLoading(true);
         const { data, error } = await getSavedInboxesFromDb(userId, websiteUrl);
 
@@ -38,12 +40,13 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
 
         if (data && data.length > 0) {
             setActiveInbox(data[0]);
+            stopListener?.();
             startListening({
                 id: data[0].id,
                 email: data[0].email_address,
                 password: decryptPassword(data[0].password, userId),
             });
-        } else {
+        } else if (src !== "fromDelete") {
             setActiveInbox(null)
             setOtp(null);
             setOtpState("idle");
@@ -56,6 +59,7 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
         setError(null);
 
         try {
+            stopListener?.();
             const inbox = await createInbox(websiteUrl, authState);
             let savedInbox: SavedInbox = { id: inbox.id, email_address: inbox.email, password: inbox.password, created_at: new Date().toISOString(), inbox_id: inbox.id }
 
@@ -99,7 +103,6 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
                 setOtpState("received");
             },
             (raw, timestamp) => {
-                // email arrived but no OTP found
                 setRawMessage(raw);
                 setOtpState("no_otp");
             },
@@ -115,8 +118,8 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
 
     async function deleteInbox(emailId: string, showToast: (message: string, type: ToastType) => void) {
         setLoading(true);
-        const { error } = await deleteInboxFromDb(websiteUrl, emailId, authState);
-        if (error) {
+        const res = await deleteInboxFromDb(websiteUrl, emailId, authState);
+        if (res.status !== 200) {
             setError("Failed to delete inbox. Try again.");
             showToast("Failed to delete inbox. Try again.", "error");
             setLoading(false);

@@ -1,8 +1,7 @@
 import { extractOTP } from "./otp";
 import type { AuthState } from "../utils/generic-utils";
 import DOMPurify from "dompurify";
-
-const BASE_URL = "https://api.signdup.net";
+import { maxPollCount } from "./constants";
 
 export type Inbox = {
     id: string;
@@ -42,12 +41,17 @@ export async function listenForOTP(
     const { signal } = controller;
     let lastMessageId: string | null = null;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let pollCount = 0;
 
     async function poll() {
-        if (signal.aborted) return;
+        if (signal.aborted || pollCount === maxPollCount) {
+            controller.abort();
+            onError("Sorry, couldn't fetch any OTP");
+            return;
+        };
 
         try {
-            const listRes = await fetch(`${BASE_URL}/messages?inbox=${inbox.email}`, {
+            const listRes = await fetch(`${import.meta.env.VITE_WORKER_URL}/messages?inbox=${inbox.email}`, {
                 headers: { Authorization: `Bearer ${authState.status === "loggedIn" ? authState.authToken : undefined}`, apikey: import.meta.env.VITE_SUPABASE_ANON_KEY },
                 signal,
             });
@@ -78,7 +82,7 @@ export async function listenForOTP(
             if (err instanceof Error && err.name === "AbortError") return;
             onError(err);
         }
-
+        pollCount++;
         if (!signal.aborted) {
             timeoutId = setTimeout(poll, 3000);
         }

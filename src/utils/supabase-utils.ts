@@ -48,13 +48,11 @@ export async function addNewInboxToDb(userId: string, websiteUrl: string, inboxI
 
 export async function deleteInboxFromDb(websiteUrl: string, emailId: string, authState: AuthState) {
 
-    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-inbox`, {
+    return await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-inbox`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authState.status === "loggedIn" ? authState.authToken : undefined}` },
         body: JSON.stringify({ websiteUrl, emailId }),
     });
-
-    return res.json();
 }
 
 export async function signOut() {

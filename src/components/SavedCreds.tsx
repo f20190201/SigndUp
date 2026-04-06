@@ -92,7 +92,7 @@ function SavedCreds({
                                 {new Date(cred.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                             </span>
                             <div className="flex items-center gap-2">
-                                {activeInbox?.id === cred.id ? (
+                                {activeInbox?.email_address === cred.email_address ? (
                                     <ActiveTag />
                                 ) : (
                                     <>
