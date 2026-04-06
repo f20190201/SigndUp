@@ -64,15 +64,15 @@ export async function listenForOTP(
                 if (latest.id !== lastMessageId) {
                     lastMessageId = latest.id;
                     const msg = latest;
-                    const dirtyText = msg.subject || "" + msg.body || "" + msg.rawMessage || "";
+                    const dirtyText = (msg.subject || "") + (msg.body || "") + (msg.rawMessage || "");
                     const rawMessage = sanitizeHtml(msg.rawMessage || "");
                     const otp = extractOTP(dirtyText);
 
                     if (otp) {
-                        onOTP(otp, rawMessage, msg.createdAt);
+                        onOTP(otp, rawMessage, msg.receivedAt);
 
                     } else {
-                        onNoOTP(rawMessage, msg.createdAt, false);
+                        onNoOTP(rawMessage, msg.receivedAt, false);
                     }
                     controller.abort();
                     return;
