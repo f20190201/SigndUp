@@ -16,6 +16,8 @@ type SessionStatus = {
     authToken: string;
 }
 
+export type OTPState = "idle" | "waiting" | "received" | "no_otp" | "no_otp_polling_timed_out";
+
 export function detectSite(callback: (hostname: string) => void) {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const tab = tabs[0];

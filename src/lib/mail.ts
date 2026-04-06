@@ -33,7 +33,7 @@ function sanitizeHtml(html: string): string {
 export async function listenForOTP(
     inbox: Inbox,
     onOTP: (otp: string, raw: string, timestamp: string) => void,
-    onNoOTP: (raw: string, timestamp: string) => void,
+    onNoOTP: (raw: string, timestamp: string, isPollingTimedOut: boolean) => void,
     onError: (err: unknown) => void,
     authState: AuthState
 ): Promise<() => void> {
@@ -46,7 +46,7 @@ export async function listenForOTP(
     async function poll() {
         if (signal.aborted || pollCount === maxPollCount) {
             controller.abort();
-            onError("Sorry, couldn't fetch any OTP");
+            if (pollCount === maxPollCount) onNoOTP("", "", true);
             return;
         };
 
@@ -70,12 +70,12 @@ export async function listenForOTP(
 
                     if (otp) {
                         onOTP(otp, rawMessage, msg.createdAt);
-                        controller.abort();
-                        return;
-                    } else {
 
-                        onNoOTP(rawMessage, msg.createdAt);
+                    } else {
+                        onNoOTP(rawMessage, msg.createdAt, false);
                     }
+                    controller.abort();
+                    return;
                 }
             }
         } catch (err: unknown) {

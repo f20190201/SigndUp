@@ -1,14 +1,13 @@
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, memo, useMemo } from "react";
 import { type SavedInbox } from "../hooks/useInbox";
 import InputAndCopyBtnShimmer from "./library/InputAndCopyBtnShimmer";
 import { decryptPassword } from "../lib/crypto";
 import ViewOriginalMessage from "./library/ViewOriginalMessage";
 import RenderIf from "./library/RenderIf";
 import SparklerIcon from "../assets/sparkler.svg"
-import { sendMessageToContentScript } from "../utils/generic-utils";
+import { sendMessageToContentScript, type OTPState } from "../utils/generic-utils";
 import type { ToastType } from "../hooks/useToast";
-
-type OTPState = "idle" | "waiting" | "received" | "no_otp";
+import { maxPollCount, statusesToShowNoOtpDivfor } from "../lib/constants";
 
 type Props = {
     currentSite: string;
@@ -62,6 +61,16 @@ function OTPListener({
         const res = await sendMessageToContentScript("AUTOFILL", { email, password });
         showToast(res.message, res.result === "SUCCESS" ? "success" : res.result === "PARTIAL" ? "warning" : "error");
     }
+
+    const RefreshBtn = useMemo(() => {
+        return <button
+            onClick={onRefresh}
+            className="text-[10px] font-bold uppercase tracking-tight text-black/30 hover:text-black transition-colors px-1"
+        >
+            Refresh
+        </button>
+
+    }, [otpState, onRefresh])
 
     return (
         <div className="flex flex-col gap-3.5 p-4 animate-in">
@@ -136,12 +145,7 @@ function OTPListener({
                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
                             <span className="text-[11px] font-medium text-black/60">Listening for email</span>
                         </div>
-                        <button
-                            onClick={onRefresh}
-                            className="text-[10px] font-bold uppercase tracking-tight text-black/30 hover:text-black transition-colors px-1"
-                        >
-                            Refresh
-                        </button>
+                        {RefreshBtn}
                     </div>
                     <div className="px-4 py-8 text-center text-[13px] text-black/40 font-medium leading-relaxed">
                         Waiting for an email at<br />
@@ -177,17 +181,22 @@ function OTPListener({
                 </div>
             )}
 
-            <RenderIf condition={otpState === "no_otp"}>
+            <RenderIf condition={statusesToShowNoOtpDivfor.includes(otpState)}>
                 <div className="border border-black/5 rounded-2xl overflow-hidden bg-amber-50/30 animate-in">
                     <div className="flex items-center justify-between px-3.5 py-2.5 bg-amber-50 border-b border-amber-100">
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]" />
-                            <span className="text-[11px] font-medium text-amber-900/60">Email received — no OTP found</span>
+                            <RenderIf condition={otpState === "no_otp"}>
+                                <span className="text-[11px] font-medium text-amber-900/60">Email received — no OTP found</span>
+                            </RenderIf>
                         </div>
+                        <RenderIf condition={otpState === "no_otp_polling_timed_out"}>
+                            {RefreshBtn}
+                        </RenderIf>
                     </div>
                     <div className="px-4 py-4 flex flex-col gap-3">
                         <p className="text-[12px] text-amber-900/50 font-medium leading-relaxed">
-                            We detected a new email, but couldn't find a verification code inside.
+                            {otpState === "no_otp_polling_timed_out" ? `We couldn't find an OTP in the last ${maxPollCount} tries. Try refreshing.` : "We detected a new email, but couldn't find a verification code inside."}
                         </p>
                         <ViewOriginalMessage rawMessage={rawMessage} showRaw={showRaw} setShowRaw={setShowRaw} />
                     </div>

@@ -3,7 +3,7 @@ import { deleteInboxFromDb, getSavedInboxesFromDb } from "../utils/supabase-util
 import { createInbox, listenForOTP, type Inbox } from "../lib/mail";
 import { decryptPassword } from "../lib/crypto";
 import { type ToastType } from "./useToast";
-import type { AuthState } from "../utils/generic-utils";
+import type { AuthState, OTPState } from "../utils/generic-utils";
 
 export type SavedInbox = {
     id: string;
@@ -12,8 +12,6 @@ export type SavedInbox = {
     created_at: string;
     inbox_id: string;
 };
-
-export type OTPState = "idle" | "waiting" | "received" | "no_otp";
 
 export type SavedInboxFetchSource = "generic" | "fromDelete";
 
@@ -102,9 +100,9 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
                 setRawMessage(raw);
                 setOtpState("received");
             },
-            (raw, timestamp) => {
+            (raw, _timestamp, isPollingTimedOut) => {
                 setRawMessage(raw);
-                setOtpState("no_otp");
+                setOtpState(isPollingTimedOut ? "no_otp_polling_timed_out" : "no_otp");
             },
             (err) => {
                 console.error("Poll error:", err);
