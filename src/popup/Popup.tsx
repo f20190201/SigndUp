@@ -1,4 +1,4 @@
-import { useState, useEffect, memo, useCallback, lazy } from "react";
+import { useState, useEffect, useCallback, lazy, useMemo, useLayoutEffect } from "react";
 import Header from "../components/Header";
 import { useInbox } from "../hooks/useInbox";
 import { detectSite, validateLocalStorageInfo, handleSignUpSignIn, type AuthState, isValidSession, setSessionStatus, clearDataOnLogout } from "../utils/generic-utils";
@@ -6,6 +6,7 @@ import LoginScreen from "../components/library/LoginScreen";
 import TabBar, { type Tab } from "../components/library/TabBar";
 import { signOut } from "../utils/supabase-utils";
 import { useToast } from "../hooks/useToast";
+import { statusesToShowLoginScreenfor } from "../lib/constants";
 const OTPListener = lazy(() => import("../components/OTPListener"));
 const SavedCreds = lazy(() => import("../components/SavedCreds"));
 
@@ -49,7 +50,8 @@ export default function Popup() {
     setIsLoginLoading(false);
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    setAuthState({ status: "loading" });
     chrome.alarms.clear("sessionTimeout").then((_) => {
       chrome.alarms.create("sessionTimeout", { delayInMinutes: 7 });
     });
@@ -61,6 +63,7 @@ export default function Popup() {
         });
       },
       () => {
+        setAuthState({ status: "loggedOut" });
         chrome.storage.session.remove("sessionStatus");
       }
     )
@@ -72,11 +75,20 @@ export default function Popup() {
     }
   }, [authState, currentSite]);
 
+  const nonLoginView = useMemo(() => {
+    switch (authState.status) {
+      case "loading":
+        return <LoginScreen onLogin={handleLogin} authState={authState} loading={true} />
+      default:
+        return <LoginScreen onLogin={handleLogin} authState={authState} />
+    }
+  }, [authState.status])
+
   return (
     <>
       <Toast />
-      {authState.status === "loggedOut" || authState.status === "error" ? (
-        <LoginScreen onLogin={handleLogin} authState={authState} />
+      {statusesToShowLoginScreenfor.includes(authState.status) ? (
+        nonLoginView
       ) : (
         <div className="flex flex-col bg-white rounded-2xl border border-black/5 m-2.5 overflow-hidden shadow-xl animate-in glass ring-1 ring-black/[0.02]">
           <Header userId={authState.status === "loggedIn" ? authState.loginUserId : ""} onLogout={onLogout} />

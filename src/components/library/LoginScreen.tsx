@@ -5,7 +5,7 @@ import PasswordInput from "./PasswordInput";
 import Logo from "./Logo";
 import type { AuthState } from "../../utils/generic-utils";
 
-const LoginScreen = memo(function ({ onLogin, authState }: { onLogin: (id: string, password: string, setIsLoginLoading: (value: boolean) => void) => void, authState: AuthState | null }) {
+const LoginScreen = memo(function ({ onLogin, authState, loading = false }: { onLogin: (id: string, password: string, setIsLoginLoading: (value: boolean) => void) => void, authState: AuthState | null, loading?: boolean }) {
     const [credsObj, setCredsObj] = useState({ userId: "", password: "" });
     const [isLoginLoading, setIsLoginLoading] = useState<boolean>(false);
 
@@ -48,10 +48,10 @@ const LoginScreen = memo(function ({ onLogin, authState }: { onLogin: (id: strin
                     onClick={() => {
                         credsObj.userId.trim() && credsObj.password.trim() && onLogin(credsObj.userId.trim(), credsObj.password.trim(), setIsLoginLoading);
                     }}
-                    disabled={credsObj.password.trim().length < 6 || isLoginLoading}
+                    disabled={credsObj.password.trim().length < 6 || isLoginLoading || loading}
                     className="h-11 rounded-2xl bg-black text-white text-[13px] font-bold hover:bg-black/80 transition-all w-full shadow-lg shadow-black/10 disabled:opacity-30 disabled:cursor-not-allowed active-shrink flex items-center justify-center"
                 >
-                    {isLoginLoading ? (
+                    {isLoginLoading || loading ? (
                         <div className="dot-loader"><span></span><span></span><span></span></div>
                     ) : "Continue"}
                 </button>

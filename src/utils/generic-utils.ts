@@ -6,7 +6,8 @@ import type { ToastType } from "../hooks/useToast";
 export type AuthState =
     | { status: "loggedOut" }
     | { status: "loggedIn", dBUserId: string, loginUserId: string, authToken: string }
-    | { status: "error"; message: string };
+    | { status: "error"; message: string }
+    | { status: "loading" }
 
 type SessionStatus = {
     dBUserId: string;
