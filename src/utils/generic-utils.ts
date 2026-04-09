@@ -172,3 +172,12 @@ export function clearDataOnLogout(setAuthState: (val: AuthState) => void, stopLi
     stopListener?.()
     showToast("Logged out successfully", "success");
 }
+
+export function getAuthToken(authState: AuthState) {
+    switch (authState.status) {
+        case "loggedIn":
+            return authState.authToken;
+        default:
+            return null;
+    }
+}

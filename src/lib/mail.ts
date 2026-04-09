@@ -11,19 +11,46 @@ export type Inbox = {
 
 export async function createInbox(websiteUrl: string, authState: AuthState): Promise<Inbox> {
 
-    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-inbox`, {
+    const res = await fetch(`${import.meta.env.VITE_WORKER_URL}/functions/v1/generate-inbox`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authState.status === "loggedIn" ? authState.authToken : undefined}` },
         body: JSON.stringify({ websiteUrl }),
     });
 
-    const account = await res.json();
+    switch (res.status) {
+        case (200): {
+            const account = await res.json();
+            return {
+                id: account.id,
+                email: account.emailId,
+                password: account.password,
+            };
+        }
+        case (401): {
+            throw new Error("Unauthorized");
+        }
+        case (404): {
+            throw new Error("Not Found");
+        }
+        case (429): {
+            const errText = (await res.json()).error;
+            throw new Error(errText);
+        }
+        case (500): {
+            throw new Error("Internal Server Error");
+        }
+        default: {
+            throw new Error("Something went wrong");
+        }
+    }
 
-    return {
-        id: account.id,
-        email: account.emailId,
-        password: account.password,
-    };
+    // const account = await res.json();
+
+    // return {
+    //     id: account.id,
+    //     email: account.emailId,
+    //     password: account.password,
+    // };
 }
 
 function sanitizeHtml(html: string): string {

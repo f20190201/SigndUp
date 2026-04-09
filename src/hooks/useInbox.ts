@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { deleteInboxFromDb, getSavedInboxesFromDb } from "../utils/supabase-utils";
 import { createInbox, listenForOTP, type Inbox } from "../lib/mail";
 import { decryptPassword } from "../lib/crypto";
 import { type ToastType } from "./useToast";
 import type { AuthState, OTPState } from "../utils/generic-utils";
+import { getAuthToken } from "../utils/generic-utils";
 
 export type SavedInbox = {
     id: string;
@@ -24,6 +25,10 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [stopListener, setStopListener] = useState<(() => void) | null>(null);
+
+    useLayoutEffect(() => {
+        setError(null);
+    }, [getAuthToken(authState)])
 
     async function fetchSavedInboxes(src: SavedInboxFetchSource = "generic") {
         if (src === "generic") setLoading(true);
@@ -69,8 +74,8 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
                 email: inbox.email,
                 password: inbox.password
             });
-        } catch (err) {
-            setError("Failed to generate inbox. Try again.");
+        } catch (err: any) {
+            setError(`Failed to generate inbox - ${err.message}`);
         } finally {
             setLoading(false);
         }
