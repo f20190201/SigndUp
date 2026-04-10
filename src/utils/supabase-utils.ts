@@ -1,11 +1,15 @@
 import { supabase } from "../lib/supabase";
-import type { AuthState } from "./generic-utils";
+import { getVisitorId, type AuthState } from "./generic-utils";
 
 export async function addNewUserToDb(userId: string, password: string) {
-    return await supabase.auth.signUp({
-        email: `${userId.toLowerCase().trim()}@disposable-ext.local`,
-        password: password,
+    let visitorId = await getVisitorId();
+    let res = await fetch(`${import.meta.env.VITE_WORKER_URL}/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, password, visitorId }),
     });
+
+    return await res.json();
 }
 
 export async function loginUser(userId: string, password: string) {

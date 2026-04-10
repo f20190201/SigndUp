@@ -1,5 +1,5 @@
 import { extractOTP } from "./otp";
-import type { AuthState } from "../utils/generic-utils";
+import { type AuthState, getVisitorIdFromAuthState } from "../utils/generic-utils";
 import DOMPurify from "dompurify";
 import { maxPollCount } from "./constants";
 
@@ -10,11 +10,13 @@ export type Inbox = {
 };
 
 export async function createInbox(websiteUrl: string, authState: AuthState): Promise<Inbox> {
+    console.log("authh", authState);
+    const visitorId = getVisitorIdFromAuthState(authState);
 
     const res = await fetch(`${import.meta.env.VITE_WORKER_URL}/functions/v1/generate-inbox`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authState.status === "loggedIn" ? authState.authToken : undefined}` },
-        body: JSON.stringify({ websiteUrl }),
+        body: JSON.stringify({ websiteUrl, visitorId }),
     });
 
     switch (res.status) {

@@ -2,10 +2,11 @@ import { getDomain } from "tldts";
 import { loginUser, addNewUserToDb, checkTokenValidity } from "./supabase-utils";
 import type { Session, User, AuthError } from "@supabase/supabase-js";
 import type { ToastType } from "../hooks/useToast";
+import FingerprintJS from '@fingerprintjs/fingerprintjs'
 
 export type AuthState =
     | { status: "loggedOut" }
-    | { status: "loggedIn", dBUserId: string, loginUserId: string, authToken: string }
+    | { status: "loggedIn", dBUserId: string, loginUserId: string, authToken: string, visitorId: string }
     | { status: "error"; message: string }
     | { status: "loading" }
 
@@ -14,9 +15,30 @@ type SessionStatus = {
     loginUserId: string;
     expiresAt: string;
     authToken: string;
+    visitorId: string;
 }
 
 export type OTPState = "idle" | "waiting" | "received" | "no_otp" | "no_otp_polling_timed_out";
+
+export async function getVisitorId() {
+    const fpPromise = FingerprintJS.load();
+    const fp = await fpPromise
+    const result = await fp.get()
+    return result.visitorId
+}
+
+export function getVisitorIdFromAuthState(authState: AuthState) {
+    switch (authState.status) {
+        case "loggedIn":
+            return authState.visitorId;
+        default:
+            return null;
+    }
+}
+
+function getVisitorIdFromUser(user: any) {
+    return user?.app_metadata?.visitor_id;
+}
 
 export function detectSite(callback: (hostname: string) => void) {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -70,14 +92,14 @@ export async function handleSignUpSignIn(loginUserId: string, password: string):
         const { data: { user, session }, error: _error } = await loginUser(loginUserId, password);
         if (user !== null && session !== null) {
             chrome.action.setBadgeText({ text: "" });
-            return { status: "loggedIn", dBUserId: user.id, loginUserId: loginUserId, authToken: session.access_token };
+            return { status: "loggedIn", dBUserId: user.id, loginUserId: loginUserId, authToken: session.access_token, visitorId: getVisitorIdFromUser(user) };
         } else {
             return { status: "error", message: "Invalid password" };
         }
     } else {
         if (signUpUser !== null && signUpSession !== null) {
             chrome.action.setBadgeText({ text: "" });
-            return { status: "loggedIn", dBUserId: signUpUser.id, loginUserId: loginUserId, authToken: signUpSession.access_token };
+            return { status: "loggedIn", dBUserId: signUpUser.id, loginUserId: loginUserId, authToken: signUpSession.access_token, visitorId: getVisitorIdFromUser(signUpUser) };
         } else {
             return { status: "error", message: "Failed to authenticate" };
         }
@@ -109,7 +131,7 @@ export function getValidDbUserId(authState: AuthState) {
 export function setSessionStatus(authState: AuthState) {
     switch (authState.status) {
         case "loggedIn":
-            const sessionStatus: SessionStatus = { dBUserId: authState.dBUserId, loginUserId: authState.loginUserId, expiresAt: String(Date.now() + 7 * 60 * 1000), authToken: authState.authToken };
+            const sessionStatus: SessionStatus = { dBUserId: authState.dBUserId, loginUserId: authState.loginUserId, expiresAt: String(Date.now() + 7 * 60 * 1000), authToken: authState.authToken, visitorId: authState.visitorId };
             chrome.storage.session.set({ sessionStatus });
             break;
         case "loggedOut":

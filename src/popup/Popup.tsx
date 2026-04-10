@@ -59,7 +59,7 @@ export default function Popup() {
       (sessionStatus) => {
         detectSite((hostname) => {
           setCurrentSite(hostname);
-          setAuthState({ status: "loggedIn", dBUserId: sessionStatus.dBUserId, loginUserId: sessionStatus.loginUserId, authToken: sessionStatus.authToken });
+          setAuthState({ status: "loggedIn", dBUserId: sessionStatus.dBUserId, loginUserId: sessionStatus.loginUserId, authToken: sessionStatus.authToken, visitorId: sessionStatus.visitorId });
         });
       },
       () => {
