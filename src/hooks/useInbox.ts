@@ -25,6 +25,7 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [stopListener, setStopListener] = useState<(() => void) | null>(null);
+    const [pollingCount, setPollingCount] = useState<number>(0);
 
     useLayoutEffect(() => {
         setError(null);
@@ -97,9 +98,11 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
         setOtpState("waiting");
         setOtp(null);
         setRawMessage(null);
+        setPollingCount(0);
 
         const stop = await listenForOTP(
             inbox,
+            setPollingCount,
             (receivedOtp, raw, timestamp) => {
                 setOtp({ otp: receivedOtp, timestamp });
                 setRawMessage(raw);
@@ -157,6 +160,7 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
         selectInbox,
         refresh,
         deleteInbox,
-        stopListener
+        stopListener,
+        pollingCount
     };
 }

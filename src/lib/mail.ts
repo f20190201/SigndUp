@@ -1,7 +1,7 @@
 import { extractOTP } from "./otp";
 import { type AuthState, getVisitorIdFromAuthState } from "../utils/generic-utils";
 import DOMPurify from "dompurify";
-import { maxPollCount } from "./constants";
+import { MAX_POLL_COUNT } from "./constants";
 
 export type Inbox = {
     id: string;
@@ -61,6 +61,7 @@ function sanitizeHtml(html: string): string {
 
 export async function listenForOTP(
     inbox: Inbox,
+    setPollingCount: (count: number) => void,
     onOTP: (otp: string, raw: string, timestamp: string) => void,
     onNoOTP: (raw: string, timestamp: string, isPollingTimedOut: boolean) => void,
     onError: (err: unknown) => void,
@@ -73,9 +74,9 @@ export async function listenForOTP(
     let pollCount = 0;
 
     async function poll() {
-        if (signal.aborted || pollCount === maxPollCount) {
+        if (signal.aborted || pollCount === MAX_POLL_COUNT) {
             controller.abort();
-            if (pollCount === maxPollCount) onNoOTP("", "", true);
+            if (pollCount === MAX_POLL_COUNT) onNoOTP("", "", true);
             return;
         };
 
@@ -112,6 +113,7 @@ export async function listenForOTP(
             onError(err);
         }
         pollCount++;
+        setPollingCount(pollCount);
         if (!signal.aborted) {
             timeoutId = setTimeout(poll, 3000);
         }

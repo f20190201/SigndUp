@@ -6,7 +6,7 @@ import LoginScreen from "../components/library/LoginScreen";
 import TabBar, { type Tab } from "../components/library/TabBar";
 import { signOut } from "../utils/supabase-utils";
 import { useToast } from "../hooks/useToast";
-import { statusesToShowLoginScreenfor } from "../lib/constants";
+import { STATUSES_TO_SHOW_LOGIN_SCREEN_FOR } from "../lib/constants";
 const OTPListener = lazy(() => import("../components/OTPListener"));
 const SavedCreds = lazy(() => import("../components/SavedCreds"));
 
@@ -87,7 +87,7 @@ export default function Popup() {
   return (
     <>
       <Toast />
-      {statusesToShowLoginScreenfor.includes(authState.status) ? (
+      {STATUSES_TO_SHOW_LOGIN_SCREEN_FOR.includes(authState.status) ? (
         nonLoginView
       ) : (
         <div className="flex flex-col bg-white rounded-2xl border border-black/5 m-2.5 overflow-hidden shadow-xl animate-in glass ring-1 ring-black/[0.02]">
@@ -110,6 +110,7 @@ export default function Popup() {
                   userId={authState.status === "loggedIn" ? authState.dBUserId : ""}
                   onSelect={inbox.selectInbox}
                   showToast={showToast}
+                  pollingCount={inbox.pollingCount}
                 />
               </div>
             ) : (
