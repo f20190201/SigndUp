@@ -3,6 +3,7 @@ import { loginUser, addNewUserToDb, checkTokenValidity, getDomainInboxesCount } 
 import type { Session, User, AuthError } from "@supabase/supabase-js";
 import type { ToastType } from "../hooks/useToast";
 import FingerprintJS from '@fingerprintjs/fingerprintjs'
+import { DOMAIN_INBOXES_COUNT_KEY } from "../lib/constants";
 
 export type AuthState =
     | { status: "loggedOut" }
@@ -223,7 +224,7 @@ export function setDomainInboxesCountInLclStorage(authState: AuthState) {
             if (res.status === 200) {
                 const data: DomainInboxesCountRespType = await res.json();
                 const existingDomainInboxesObj = await getDomainInboxesCountFromLclStorage();
-                chrome.storage.local.set({ "domainInboxesCount": { ...existingDomainInboxesObj.domainInboxesCount, [getValidDbUserId(authState)!]: data.counts } });
+                chrome.storage.local.set({ [DOMAIN_INBOXES_COUNT_KEY]: { ...existingDomainInboxesObj.domainInboxesCount, [getValidDbUserId(authState)!]: data.counts } });
             }
         });
     }
@@ -231,8 +232,22 @@ export function setDomainInboxesCountInLclStorage(authState: AuthState) {
 
 export function getDomainInboxesCountFromLclStorage() {
     return new Promise<DomainInboxesLclStorageObject>((resolve) => {
-        chrome.storage.local.get("domainInboxesCount", (result: DomainInboxesLclStorageObject) => {
+        chrome.storage.local.get([DOMAIN_INBOXES_COUNT_KEY], (result: DomainInboxesLclStorageObject) => {
             resolve(result);
         });
     });
+}
+
+export function updateDomainInboxesCountForThisUser(authState: AuthState, type: "increment" | "decrement") {
+    const callback = async (currentSite: string) => {
+        if (!isValidSession(authState)) {
+            return;
+        }
+        const dBUserId = getValidDbUserId(authState)!;
+        const existingDomainInboxesObj = await getDomainInboxesCountFromLclStorage();
+        const currentCountObj = existingDomainInboxesObj.domainInboxesCount[dBUserId];
+        const newCountObj = { ...currentCountObj, [currentSite]: (currentCountObj[currentSite] || 0) + (type === "increment" ? 1 : -1) };
+        chrome.storage.local.set({ [DOMAIN_INBOXES_COUNT_KEY]: { ...existingDomainInboxesObj.domainInboxesCount, [dBUserId]: newCountObj } });
+    }
+    detectSite(callback);
 }

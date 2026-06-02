@@ -4,7 +4,7 @@ import { createInbox, listenForOTP, type Inbox } from "../lib/mail";
 import { decryptPassword } from "../lib/crypto";
 import { type ToastType } from "./useToast";
 import type { AuthState, OTPState } from "../utils/generic-utils";
-import { getAuthToken } from "../utils/generic-utils";
+import { getAuthToken, updateDomainInboxesCountForThisUser } from "../utils/generic-utils";
 
 export type SavedInbox = {
     id: string;
@@ -69,6 +69,7 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
 
             setSavedInboxes((prev) => [savedInbox, ...prev]);
             setActiveInbox(savedInbox);
+            updateDomainInboxesCountForThisUser(authState, "increment");
 
             await startListening({
                 id: inbox.id,
@@ -131,6 +132,7 @@ export function useInbox(userId: string, websiteUrl: string, authState: AuthStat
             setLoading(false);
             return;
         }
+        updateDomainInboxesCountForThisUser(authState, "decrement");
         fetchSavedInboxes("fromDelete");
         showToast("Inbox deleted successfully", "success");
     }
