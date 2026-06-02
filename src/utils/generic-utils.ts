@@ -1,5 +1,5 @@
 import { getDomain } from "tldts";
-import { loginUser, addNewUserToDb, checkTokenValidity } from "./supabase-utils";
+import { loginUser, addNewUserToDb, checkTokenValidity, getDomainInboxesCount } from "./supabase-utils";
 import type { Session, User, AuthError } from "@supabase/supabase-js";
 import type { ToastType } from "../hooks/useToast";
 import FingerprintJS from '@fingerprintjs/fingerprintjs'
@@ -16,6 +16,19 @@ type SessionStatus = {
     expiresAt: string;
     authToken: string;
     visitorId: string;
+}
+
+export type DomainInboxesLclStorageObject = {
+    domainInboxesCount: {
+        [dbUserId: string]: {
+            [domain: string]: number;
+        };
+    };
+};
+
+export type DomainInboxesCountRespType = {
+    success: boolean,
+    counts: { [domainName: string]: number }
 }
 
 export type OTPState = "idle" | "waiting" | "received" | "no_otp" | "no_otp_polling_timed_out";
@@ -202,4 +215,24 @@ export function getAuthToken(authState: AuthState) {
         default:
             return null;
     }
+}
+
+export function setDomainInboxesCountInLclStorage(authState: AuthState) {
+    if (isValidSession(authState)) {
+        getDomainInboxesCount(authState).then(async (res) => {
+            if (res.status === 200) {
+                const data: DomainInboxesCountRespType = await res.json();
+                const existingDomainInboxesObj = await getDomainInboxesCountFromLclStorage();
+                chrome.storage.local.set({ "domainInboxesCount": { ...existingDomainInboxesObj.domainInboxesCount, [getValidDbUserId(authState)!]: data.counts } });
+            }
+        });
+    }
+}
+
+export function getDomainInboxesCountFromLclStorage() {
+    return new Promise<DomainInboxesLclStorageObject>((resolve) => {
+        chrome.storage.local.get("domainInboxesCount", (result: DomainInboxesLclStorageObject) => {
+            resolve(result);
+        });
+    });
 }

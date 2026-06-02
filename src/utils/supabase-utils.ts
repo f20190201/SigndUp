@@ -66,3 +66,11 @@ export async function signOut() {
 export async function checkTokenValidity(authToken: string) {
     return await supabase.auth.getUser(authToken);
 }
+
+export async function getDomainInboxesCount(authState: AuthState) {
+
+    return await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get_domain_inbox_counts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authState.status === "loggedIn" ? authState.authToken : undefined}` },
+    });
+}

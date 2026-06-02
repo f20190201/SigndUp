@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, lazy, useMemo, useLayoutEffect } from "react";
 import Header from "../components/Header";
 import { useInbox } from "../hooks/useInbox";
-import { detectSite, validateLocalStorageInfo, handleSignUpSignIn, type AuthState, isValidSession, setSessionStatus, clearDataOnLogout } from "../utils/generic-utils";
+import { detectSite, validateLocalStorageInfo, handleSignUpSignIn, type AuthState, isValidSession, setSessionStatus, clearDataOnLogout, setDomainInboxesCountInLclStorage } from "../utils/generic-utils";
 import LoginScreen from "../components/library/LoginScreen";
 import TabBar, { type Tab } from "../components/library/TabBar";
 import { signOut } from "../utils/supabase-utils";
@@ -40,6 +40,7 @@ export default function Popup() {
       setIsLoginLoading(false);
       return;
     }
+    setDomainInboxesCountInLclStorage(authResult);
 
     setSessionStatus(authResult);
     if (authResult.status === "loggedIn") {
