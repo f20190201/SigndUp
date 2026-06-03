@@ -4,6 +4,7 @@ import type { Session, User, AuthError } from "@supabase/supabase-js";
 import type { ToastType } from "../hooks/useToast";
 import FingerprintJS from '@fingerprintjs/fingerprintjs'
 import { DOMAIN_INBOXES_COUNT_KEY } from "../lib/constants";
+import { setBadgeText, updateBadgeTextWithInboxesCount } from "./background-utils";
 
 export type AuthState =
     | { status: "loggedOut" }
@@ -11,7 +12,7 @@ export type AuthState =
     | { status: "error"; message: string }
     | { status: "loading" }
 
-type SessionStatus = {
+export type SessionStatus = {
     dBUserId: string;
     loginUserId: string;
     expiresAt: string;
@@ -105,14 +106,14 @@ export async function handleSignUpSignIn(loginUserId: string, password: string):
     if (await doesUserAlreadyExist(signUpUser, signUpSession, signUpError)) {
         const { data: { user, session }, error: _error } = await loginUser(loginUserId, password);
         if (user !== null && session !== null) {
-            chrome.action.setBadgeText({ text: "" });
+            setBadgeText("");
             return { status: "loggedIn", dBUserId: user.id, loginUserId: loginUserId, authToken: session.access_token, visitorId: getVisitorIdFromUser(user) };
         } else {
             return { status: "error", message: "Invalid password" };
         }
     } else {
         if (signUpUser !== null && signUpSession !== null) {
-            chrome.action.setBadgeText({ text: "" });
+            setBadgeText("");
             return { status: "loggedIn", dBUserId: signUpUser.id, loginUserId: loginUserId, authToken: signUpSession.access_token, visitorId: getVisitorIdFromUser(signUpUser) };
         } else {
             return { status: "error", message: "Failed to authenticate" };
@@ -207,6 +208,7 @@ export function clearDataOnLogout(setAuthState: (val: AuthState) => void, stopLi
     chrome.storage.session.remove("sessionStatus");
     stopListener?.()
     showToast("Logged out successfully", "success");
+    setBadgeText("LOCK");
 }
 
 export function getAuthToken(authState: AuthState) {
@@ -218,13 +220,14 @@ export function getAuthToken(authState: AuthState) {
     }
 }
 
-export function setDomainInboxesCountInLclStorage(authState: AuthState) {
+export function setDomainInboxesCountInLclStorage(authState: AuthState, currentSite: string) {
     if (isValidSession(authState)) {
         getDomainInboxesCount(authState).then(async (res) => {
             if (res.status === 200) {
                 const data: DomainInboxesCountRespType = await res.json();
                 const existingDomainInboxesObj = await getDomainInboxesCountFromLclStorage();
                 chrome.storage.local.set({ [DOMAIN_INBOXES_COUNT_KEY]: { ...existingDomainInboxesObj.domainInboxesCount, [getValidDbUserId(authState)!]: data.counts } });
+                updateBadgeTextWithInboxesCount(currentSite);
             }
         });
     }
@@ -250,4 +253,16 @@ export function updateDomainInboxesCountForThisUser(authState: AuthState, type: 
         chrome.storage.local.set({ [DOMAIN_INBOXES_COUNT_KEY]: { ...existingDomainInboxesObj.domainInboxesCount, [dBUserId]: newCountObj } });
     }
     detectSite(callback);
+}
+
+export function isValidSessionStatus(sessionStatusObj: { sessionStatus: SessionStatus } | null | undefined) {
+    if (!sessionStatusObj || !sessionStatusObj.sessionStatus) {
+        return false;
+    }
+    const sessionStatus = sessionStatusObj.sessionStatus
+    if (sessionStatus.expiresAt && sessionStatus.authToken && sessionStatus.dBUserId && sessionStatus.visitorId && sessionStatus.loginUserId) {
+        return Number(sessionStatus.expiresAt) > Date.now();
+    } else {
+        return false;
+    }
 }

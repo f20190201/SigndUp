@@ -10,7 +10,6 @@ export type Inbox = {
 };
 
 export async function createInbox(websiteUrl: string, authState: AuthState): Promise<Inbox> {
-    console.log("authh", authState);
     const visitorId = getVisitorIdFromAuthState(authState);
 
     const res = await fetch(`${import.meta.env.VITE_WORKER_URL}/functions/v1/generate-inbox`, {

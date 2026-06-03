@@ -40,12 +40,12 @@ export default function Popup() {
       setIsLoginLoading(false);
       return;
     }
-    setDomainInboxesCountInLclStorage(authResult);
 
     setSessionStatus(authResult);
     if (authResult.status === "loggedIn") {
       detectSite((hostname) => {
         setCurrentSite(hostname);
+        setDomainInboxesCountInLclStorage(authResult, hostname);
       });
     }
     setIsLoginLoading(false);

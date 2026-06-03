@@ -1,4 +1,5 @@
 import { signOut } from "../utils/supabase-utils";
+import { setBadgeText, updateBadgeTextWithInboxesCount } from "../utils/background-utils";
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === "sessionTimeout") {
@@ -8,9 +9,17 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         });
 
         await signOut().then((_) => {
-            chrome.action.setBadgeText({ text: "LOCK" });
+            setBadgeText("LOCK");
         }).catch(err => {
             console.log(err);
         });
     }
+});
+
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+    updateBadgeTextWithInboxesCount((await chrome.tabs.get(activeInfo.tabId)).url)
+});
+
+chrome.tabs.onUpdated.addListener(async (tabId, _changeInfo, _tab) => {
+    updateBadgeTextWithInboxesCount((await chrome.tabs.get(tabId)).url)
 });
