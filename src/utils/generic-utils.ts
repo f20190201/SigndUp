@@ -251,6 +251,7 @@ export function updateDomainInboxesCountForThisUser(authState: AuthState, type: 
         const currentCountObj = existingDomainInboxesObj.domainInboxesCount[dBUserId];
         const newCountObj = { ...currentCountObj, [currentSite]: (currentCountObj[currentSite] || 0) + (type === "increment" ? 1 : -1) };
         chrome.storage.local.set({ [DOMAIN_INBOXES_COUNT_KEY]: { ...existingDomainInboxesObj.domainInboxesCount, [dBUserId]: newCountObj } });
+        updateBadgeTextWithInboxesCount(currentSite);
     }
     detectSite(callback);
 }
